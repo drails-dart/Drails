@@ -7,13 +7,19 @@ const COMPONENT_NAMES = const ['Service', 'Repository'];
 
 class ApplicationContext {
   static Map<Type, Object> components = {};
-  
+
+  /**
+   * Get the controllers from the application Context
+   */
   static Iterable<Object> get controllers {
     return components.values.where((component) => CONTROLLER_NAMES.any((name) => 
         MirrorSystem.getName(reflect(component).type.simpleName).endsWith(name))
        );
   }
-  
+
+  /**
+   * Initialize the application Context
+   */
   static void bootstrap() {
     
     var dms = currentMirrorSystem()
@@ -34,7 +40,7 @@ class ApplicationContext {
       dm.isAbstract
       && MirrorSystem.getName(dm.simpleName).endsWith('Service')
     ).forEach((ClassMirror injectableCm) =>
-      components[injectableCm.reflectedType] = new ClassSearcher().getObjectThatExtend(injectableCm, dms));
+      components[injectableCm.reflectedType] = getObjectThatExtend(injectableCm, dms));
     
     _appContextlog.fine('components: $components');
     
