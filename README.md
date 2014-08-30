@@ -1,4 +1,4 @@
 Drails
 ======
 
-DART MVC Framework based on Rails
+DART MVC Framework inspired on Grails
