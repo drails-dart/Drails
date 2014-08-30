@@ -1,0 +1,5 @@
+name: drails
+description: A sample command-line application
+dependencies:
+  logging: any
+  route: any
