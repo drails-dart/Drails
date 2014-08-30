@@ -26,7 +26,9 @@ class GetValueOfAnnotation<T> {
 
 }
 
-  
+/**
+ * Check if Annotation is on [InstanceMirror] or [DeclarationMirror]
+ */
 class IsAnnotation<T> {
 
   /**
@@ -133,35 +135,56 @@ Iterable<MethodMirror> getMethodMirrorsFromClass(ClassMirror cm) {
         dm is MethodMirror && (dm as MethodMirror).isRegularMethod));
 }
 
-class ClassSearcher {
-
-  int counter = 0; 
-  
-  Object getObjectThatExtend(ClassMirror injectableCm, Iterable<DeclarationMirror> declarationCms) {
-    
-    ClassMirror result;
-    int counter2 = 0;
-    for(ClassMirror cm in declarationCms) {
-      _getObjectThatExtend(injectableCm, cm);
-      if(counter > 0 && counter2 < counter) {
-        result = cm;
-        counter2 = counter;
-        counter = 0;
-      }
-    }
-    return result.newInstance(const Symbol(''), []).reflectee;
-  }
-  
-  void _getObjectThatExtend(ClassMirror injectableCm, ClassMirror declarationCm) {
-    
-    if(declarationCm == reflectClass(Object)) {
+/**
+ * Gets the object that extends the [injectableCm] from [declarationCms]
+ */
+Object getObjectThatExtend(ClassMirror injectableCm, Iterable<DeclarationMirror> declarationCms) {
+  ClassMirror result;
+  int counter = 0, counter2 = 0;
+  for(ClassMirror cm in declarationCms) {
+    counter = _getExtensionLevel(injectableCm, cm, counter);
+    if(counter > 0 && counter2 < counter) {
+      result = cm;
+      counter2 = counter;
       counter = 0;
-      return;
-    }
-
-    counter++;
-    if(!(declarationCm.superclass == injectableCm || declarationCm.superinterfaces.any((icm) => icm == injectableCm))) {
-      _getObjectThatExtend(injectableCm, declarationCm.superclass);
     }
   }
+  
+  return result.newInstance(const Symbol(''), []).reflectee;
+}
+
+/**
+ * Get the level value that a [declarationCm] extends the [injectableCm], for example:
+ * 
+ * If we have next Abstract class:
+ *
+ *     abstract class SomeService {
+ *       String someMethod();
+ *     }
+ * 
+ * The Extension level of the next service is 1
+ *
+ *     class SomeServiceImpl implements SomeService {
+ *       String someMethod() => 'someMethod';
+ *     }
+ * 
+ * And the Extension level of the next service is 2
+ *
+ *     class SomeServiceImpl2 extens SomeServiceImpl {
+ *       String someMethod() => super.someMethod() + '2';
+ *     }
+ */
+int _getExtensionLevel(ClassMirror injectableCm, ClassMirror declarationCm, int counter) {
+  
+  if(declarationCm == reflectClass(Object)) {
+    return counter = 0;
+    
+  }
+
+  counter++;
+  if(!(declarationCm.superclass == injectableCm || declarationCm.superinterfaces.any((icm) => icm == injectableCm))) {
+    counter = _getExtensionLevel(injectableCm, declarationCm.superclass, counter);
+  }
+  
+  return counter;
 }
