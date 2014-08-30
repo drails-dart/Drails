@@ -2,6 +2,9 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
+/**
+ * Initialize the server with the given arguments
+ */
 void initServer() {
   ApplicationContext.bootstrap();
 
