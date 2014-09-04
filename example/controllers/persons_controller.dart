@@ -21,11 +21,11 @@ class PersonsController {
   
   Person get(int id) => persons[id];
   
-  Iterable<Person> getAll() => persons.values;
+  List<Person> getAll() => persons.values.toList();
   
   Person save(int id, @RequestBody Person person) => persons[id] = person;
   
-  Iterable<Person> saveAll(List<Person> persons) => 
+  Iterable<Person> saveAll(@RequestBody List<Person> persons) => 
     persons..forEach((person) {
       if(person.id == null) {
         person.id = this.persons.keys.last + 1;

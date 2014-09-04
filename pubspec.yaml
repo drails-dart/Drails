@@ -9,3 +9,4 @@ documentation: https://github.com/luisvt/Drails
 dependencies:
   logging: 0.9.2
   route: 0.4.6
+  unittest: any

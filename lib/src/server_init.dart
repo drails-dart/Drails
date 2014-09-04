@@ -65,7 +65,7 @@ void initServer() {
               namedArgs = {},
               _ref;
 
-          var i = 0;
+          var i = 0, waitFortInvocation = false;
           controllerMm.parameters.forEach((parameter) {
             if (parameter.type == reflectClass(HttpRequest)) {
               positionalArgs.add(request);
@@ -78,14 +78,24 @@ void initServer() {
               namedArgs[parameter.simpleName] = _ref;
             } else if(new IsAnnotation<_RequestBody>().onDm(parameter) 
                 && request.contentLength > 0) {
-              UTF8.decodeStream(request).then((data) =>positionalArgs.add(data))
-                .then((_) => _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request));
+              waitFortInvocation = true;
+              UTF8.decodeStream(request)
+                .then((data) {
+                  _serverInitLog.fine('RequestBodyData: $data');
+                  if(!(data as String).startsWith('['))
+                    data = '[$data]';
+                  positionalArgs.add(deserializeList(data, parameter.type.typeArguments.first.reflectedType));
+                }).then((_) => 
+                    _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request));
             } else if(pathVariables.length >= i + 1 ) {
-              //TODO: parse with dartson
               if (parameter.type == reflectClass(int)) {
                 positionalArgs.add(int.parse(pathVariables.elementAt(i++)));
               } else if (parameter.type == reflectClass(String)) {
                 positionalArgs.add(pathVariables.elementAt(i++));
+              } else if (parameter.type == reflectClass(DateTime)) {
+                positionalArgs.add(DateTime.parse(pathVariables.elementAt(i++)));
+              } else {_serverInitLog.fine('parameter.type.reflectedType: ${parameter.type.reflectedType}');
+                positionalArgs.add(deserialize(pathVariables.elementAt(i++), parameter.type.reflectedType));
               }
             }
           });
@@ -98,7 +108,9 @@ void initServer() {
               '\n\tcontrollerMm: $controllerMm'
               '\n\tpositionalArgs: $positionalArgs'
               '\n\tnamedArgs: $namedArgs');
-          _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request);
+          
+          if(!waitFortInvocation) 
+            _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request);
         });
       });
     });
@@ -116,7 +128,7 @@ void _invokeControllerMethod(
   Map<Symbol, dynamic> namedArgs,
   HttpRequest request) {
 
-          var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
+          var result = serialize(controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee);
           request.response
               ..write(result)
               ..close();

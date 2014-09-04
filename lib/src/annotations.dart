@@ -61,4 +61,3 @@ class AuthorizeIf {
   
   const AuthorizeIf(this.preAuthorizeFunc);
 }
-
