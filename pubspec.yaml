@@ -1,5 +1,5 @@
 name: drails
-version: 0.0.2
+version: 0.0.3
 author: Luis Vargas <luisvargastijerino@gmail.com>
 description: DART MVC Framework based on Rails
 homepage: https://github.com/luisvt/Drails
@@ -7,5 +7,5 @@ environment:
   sdk: 1.6.0
 documentation: https://github.com/luisvt/Drails
 dependencies:
-  logging: any
-  route: any
+  logging: 0.9.2
+  route: 0.4.6
