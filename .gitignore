@@ -13,3 +13,4 @@ pubspec.lock
 /.idea/**
 *.project
 *.iml
+/.settings/**

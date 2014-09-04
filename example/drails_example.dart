@@ -3,6 +3,8 @@ library drails_example;
 import 'package:drails/drails.dart';
 import 'package:logging/logging.dart';
 
+part 'controllers/persons_controller.dart';
+
 initLogging() {
   Logger.root.level = Level.FINE;
 //  hierarchicalLoggingEnabled = true;
