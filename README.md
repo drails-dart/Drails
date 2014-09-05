@@ -1,6 +1,6 @@
 #Drails
 
-DART MVC Framework inspired on Grails. Easy to setup and part of the dart force framework!
+DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
 ##Setup the Server
 To setup a server you just need to call the method `initServer`, for example:
@@ -144,4 +144,5 @@ If you do a POST with id null the server does an INSERT but if the id is present
 * Add Angular Dart or Polymer Dart client side
 * Handle Cyclic Reference parsing
 * Handle hashcode, _ref or @id variable to deserialize objects that don't have ids (for inserting purposes).
+* Add capacity to expose global functions
  
