@@ -1,6 +1,7 @@
 part of drails_example;
 
 class PersonsController {
+  static int lastId = 3;
   Map<int, Person> persons = {
     1: new Person()
       ..id = 1
@@ -28,12 +29,14 @@ class PersonsController {
   Iterable<Person> saveAll(@RequestBody List<Person> persons) => 
     persons..forEach((person) {
       if(person.id == null) {
-        person.id = this.persons.keys.last + 1;
+        person.id = ++lastId;
       }
       this.persons[person.id] = person;
     });
   
-  void delete(List<int> ids) => ids.forEach((id) => persons.remove(id));
+  void delete(int id) { persons.remove(id); }
+  
+  void deleteAll(@RequestBody List<int> ids) { ids.forEach((id) => persons.remove(id)); }
 }
 
 class Person {

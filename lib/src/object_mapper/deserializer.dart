@@ -43,6 +43,9 @@ dynamic deserialize(String jsonStr, Type clazz) {
 List deserializeList(String jsonStr, Type clazz) {
   List returnList = [];
   List filler = JSON.decode(jsonStr);
+  if(reflectClass(clazz).qualifiedName == _QN_INT) {
+    return filler;
+  }
   filler.forEach((item) {
     InstanceMirror obj = _initiateClass(reflectClass(clazz));
     _fillObject(obj, item);

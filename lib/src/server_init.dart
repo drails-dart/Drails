@@ -2,15 +2,20 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
+
 /**
  * Initialize the server with the given arguments
  */
-void initServer() {
+void initServer({InternetAddress address , int port : 4040}) {
+  address = address != null ? address : InternetAddress.LOOPBACK_IP_V4;
+  _serverInitLog.fine('address: $address, port: $port');
+  
   ApplicationContext.bootstrap();
 
   var controllers = ApplicationContext.controllers;
-
-  HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 4040).then((server) {
+  
+  
+  HttpServer.bind(address, port).then((server) {
     var router = new Router(server);
 
     controllers.forEach((controller) {
@@ -127,8 +132,8 @@ void _invokeControllerMethod(
   List positionalArgs,
   Map<Symbol, dynamic> namedArgs,
   HttpRequest request) {
-
-          var result = serialize(controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee);
+          var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
+          result = result == null ? "" : serialize(result);
           request.response
               ..write(result)
               ..close();
