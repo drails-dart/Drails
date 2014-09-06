@@ -1,9 +1,23 @@
 part of drails;
 
 /**
+ * Function that is used to authorize access if the result is true
+ */
+typedef bool IsAuthorized(user, AuthorizeIf me);
+
+/**
+ * Annotation that Defines what roles are allowed to execute the controller method
+ */
+class AuthorizeIf {
+  final IsAuthorized isAuthorized;
+  
+  const AuthorizeIf(this.isAuthorized);
+}
+
+/**
  * Function that allow us to authorize the access to user with specified Roles in annotation
  */
-bool authorizeRoles(user, [AuthorizeRoles me, List methodArguments]) => 
+bool authorizeRoles(user, AuthorizeRoles me) => 
     user.roles.any((role) => 
         me.roles.any((meRole) => 
             meRole == role));
@@ -14,32 +28,16 @@ bool authorizeRoles(user, [AuthorizeRoles me, List methodArguments]) =>
  */
 class AuthorizeRoles implements AuthorizeIf {
   final List<String> roles;
-  final AuthorizeFunc authorizeFunc;
-  const AuthorizeRoles(this.roles, [this.authorizeFunc = authorizeRoles]);
+  final IsAuthorized isAuthorized;
+  const AuthorizeRoles(this.roles, [this.isAuthorized = authorizeRoles]);
 }
 
-bool denyRoles(user, [AuthorizeIf me, List methodArguments]) => !authorizeRoles(user, me, methodArguments);
+///Function that deny access to users that don't have the specified roelse
+bool denyRoles(user, AuthorizeIf me) => !authorizeRoles(user, me);
   
 /**
  * Annotation that Defines what roles are denied to execute the controller method
  */
-class DenyRoles implements AuthorizeIf {
-  final List<String> roles;
-  final AuthorizeFunc authorizeFunc;
-  
-  const DenyRoles(this.roles, [this.authorizeFunc = denyRoles]);
-}
-
-/**
- * Function that is used to authorize access if the result is true
- */
-typedef bool AuthorizeFunc(user, [AuthorizeIf me, List methodArguments]);
-
-/**
- * Annotation that Defines what roles are allowed to execute the controller method
- */
-class AuthorizeIf {
-  final AuthorizeFunc authorizeFunc;
-  
-  const AuthorizeIf(this.authorizeFunc);
+class DenyRoles extends AuthorizeRoles {
+  const DenyRoles(List<String> roles, [IsAuthorized authorizeFunc = denyRoles]) :  super(roles, authorizeFunc) ;
 }

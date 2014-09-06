@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'dart:io';
 
 part 'controllers/persons_controller.dart';
-part 'controllers/login_controller.dart';
+part 'controllers/authorization_sample_controller.dart';
 part 'models/user.dart';
 
 initLogging() {

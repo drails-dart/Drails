@@ -130,6 +130,62 @@ Although REST tells that POST and DELETE should only handle one resource, I deci
 
 If you do a POST with id null the server does an INSERT but if the id is present it does an UPDATE.
 
+## Authorization
+
+If you want to add authorization logic to a Controller or a Method of a Controller you only need to annotated it with `@AuthroizeIf` or any of its implementations. For example:
+    
+    //user is a dynamic so that roles is not typesafe
+    bool hasRolePublicOrAdmin(user, AuthorizeIf me) => user.roles.any((role) => ['PUBLIC', 'ADMIN'].any((v) => v == role));
+    
+    @AuthorizeIf(hasRolePublicOrAdmin) //You can use next annotation as shorthand
+    //@AuthorizeRoles(const ['PUBLIC', 'ADMIN'])
+    class EmployeesController {
+    
+      String get(int id) => 'employee: $id';
+      
+      @AuthorizeRoles(const ['ADMIN']) // This annotation implements @AuthorizeIf
+      String save(int id, @RequestBody Map employee) => 'saved employee: $id, $employee';
+      
+      @DenyRoles(const ['PUBLIC']) // This annotation extends @AuthorizeRoles (implements @AuthorizeIf)
+      Map saveAll(@RequestBody Map employee) => employee;
+    }
+
+Since annotations `@AuthorizeRoles` and `@DenyRoles` implements `@AuthorizeIf` they are taking in count when authorization checker is run.
+
+The only thing that you need to do before is to be sure that you save into `request.session['user']` an object that has a `roles` getter. For example:
+
+    class LoginController {
+      static Map<int, User> users = {
+        1: new User()
+          ..id = 1
+          ..name = 'lulo'
+          ..password = 'lulo'
+          ..roles = ['ADMIN'],
+        2: new User()
+          ..id = 2
+          ..name = 'beto'
+          ..password = 'betop'
+          ..roles = ['PUBLIC']
+      };
+      
+      @Post
+      void login(HttpSession session, @RequestBody User user) {
+        var currentUser = users.values.singleWhere((u) => u.name == user.name && u.password == user.password);
+        session['user'] = currentUser; 
+      }
+    }
+
+Since every Authorization logic is different for every case you should export `@AuthorizeRoles` and `@DenyRoles` and override those annotations and their respective `isAuthorize` function. For example, putting next code in main file:
+
+    import 'package:drails/drails.dart' hide AuthorizeRoles, DenyRoles, authorizeRoles, denyRoles;
+
+and creating your own implementation. Furthermore, you can also create a better `User` class that contains `Role` class, and instead passing a dynamic user object you could pass a typed user object. For example:
+
+    bool authorizeRoles(User user, AuthorizeRoles me) => 
+      user.roles.any((role) => 
+          me.roles.any((meRole) => 
+              meRole == role));
+
 ##TODOs
 
 * Create Dependency Injection Tests

@@ -10,7 +10,7 @@ class LoginController {
     2: new User()
       ..id = 2
       ..name = 'beto'
-      ..password = 'betopass'
+      ..password = 'betop'
       ..roles = ['PUBLIC']
   };
   
@@ -22,11 +22,17 @@ class LoginController {
   
 }
 
-@AuthorizeRoles(const ['PUBLIC', 'ADMIN'])
+bool hasRolePublicOrAdmin(user, AuthorizeIf me) => user.roles.any((role) => ['PUBLIC', 'ADMIN'].any((v) => v == role));
+
+@AuthorizeIf(hasRolePublicOrAdmin) //You can use next annotation as shorthand
+//@AuthorizeRoles(const ['PUBLIC', 'ADMIN'])
 class EmployeesController {
 
   String get(int id) => 'employee: $id';
   
   @AuthorizeRoles(const ['ADMIN'])
-  String save(int id, @RequestBody String employee) => 'saved employee: $id';
+  String save(int id, @RequestBody Map employee) => 'saved employee: $id, $employee';
+  
+  @DenyRoles(const ['PUBLIC'])
+  Map saveAll(@RequestBody Map employee) => employee;
 }
