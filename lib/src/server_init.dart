@@ -54,7 +54,13 @@ void initServer({InternetAddress address , int port : 4040}) {
           default:
             urlPath += '/$controllerMethodName';
             pathParamBegin = 2;
+            if(new IsAnnotation<_Post>().onDeclaration(controllerMm)) {
+              method = 'POST';
+            }
             controllerMm.parameters.forEach((param) {
+              if(!new IsAnnotation<_RequestBody>().onDeclaration(param)
+                  && param.type.simpleName != reflectClass(HttpRequest).simpleName
+                  && param.type.simpleName != reflectClass(HttpSession).simpleName)
               urlPath += wordPath;
             });
         }
@@ -78,18 +84,22 @@ void initServer({InternetAddress address , int port : 4040}) {
               positionalArgs.add(request.headers);
             } else if (parameter.type == reflectClass(HttpSession)) {
               positionalArgs.add(request.session);
-            } else if( (parameter.isNamed || new IsAnnotation<RequestParam>().onDm(parameter))
+            } else if( (parameter.isNamed || new IsAnnotation<RequestParam>().onDeclaration(parameter))
                 && (_ref = request.uri.queryParameters[MirrorSystem.getName(parameter.simpleName)]) != null) {
               namedArgs[parameter.simpleName] = _ref;
-            } else if(new IsAnnotation<_RequestBody>().onDm(parameter) 
+            } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) 
                 && request.contentLength > 0) {
               waitFortInvocation = true;
               UTF8.decodeStream(request)
                 .then((data) {
                   _serverInitLog.fine('RequestBodyData: $data');
-                  if(!(data as String).startsWith('['))
-                    data = '[$data]';
-                  positionalArgs.add(deserializeList(data, parameter.type.typeArguments.first.reflectedType));
+                  if(parameter.type.simpleName == _QN_LIST) {
+                    if(!(data as String).startsWith('['))
+                      data = '[$data]';
+                    positionalArgs.add(deserializeList(data, parameter.type.typeArguments.first.reflectedType));
+                  } else {
+                    positionalArgs.add(deserialize(data, parameter.type.reflectedType));
+                  }
                 }).then((_) => 
                     _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request));
             } else if(pathVariables.length >= i + 1 ) {
@@ -132,9 +142,23 @@ void _invokeControllerMethod(
   List positionalArgs,
   Map<Symbol, dynamic> namedArgs,
   HttpRequest request) {
-          var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
-          result = result == null ? "" : serialize(result);
-          request.response
-              ..write(result)
-              ..close();
+  
+  var user = request.session['user'],
+      _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(controllerIm),
+      authorizedForControlled = (_ref1 == null) ? true : (user == null) ? false : _ref1.authorizeFunc(user, _ref1),
+      _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(controllerMm),
+      authorizedForMethod = (_ref1 == null && _ref2 == null) ? true : (user == null) ? false : _ref1.authorizeFunc(user, _ref1);
+  
+  if(authorizedForControlled || authorizedForMethod) {
+    var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
+    result = result == null ? "" : serialize(result);
+    request.response
+        ..write(result)
+        ..close();
+  } else {
+    request.response
+      ..statusCode = 401
+      ..write("")
+      ..close();
+  }
 }

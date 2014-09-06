@@ -86,7 +86,7 @@ void _pushField(Symbol symbol, DeclarationMirror variable,
   _serLog.finer("Start serializing field: ${fieldName}");
   
   // check if there is a DartsonProperty annotation
-  Property prop = new GetValueOfAnnotation<Property>().fromDm(variable);
+  Property prop = new GetValueOfAnnotation<Property>().fromDeclaration(variable);
   _serLog.finer("Property: ${prop}");
   
   if (prop != null && prop.name != null) {  
@@ -94,7 +94,7 @@ void _pushField(Symbol symbol, DeclarationMirror variable,
     fieldName = prop.name;
   }
   
-  if (value != null && !new IsAnnotation<_Ignore>().onDm(variable)) {
+  if (value != null && !new IsAnnotation<_Ignore>().onDeclaration(variable)) {
     _serLog.finer("Serializing field: ${fieldName}");
     result[fieldName] = objectToSerializable(value);
   }

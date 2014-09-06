@@ -8,18 +8,18 @@ class GetValueOfAnnotation<T> {
   /**
    * Get the Instance of the Annotation of type [T] from the reflected annotated object [im]
    */
-  T fromIm(InstanceMirror im) => fromAms(im.type.metadata);
+  T fromInstance(InstanceMirror im) => fromAnnotations(im.type.metadata);
 
   /**
    * Get the Instance of the Annotation of type [T] from the reflected annotated declaration (method or property) [obj]
    */
-  T fromDm(DeclarationMirror dm) => fromAms(dm.metadata);
+  T fromDeclaration(DeclarationMirror dm) => fromAnnotations(dm.metadata);
 
   /**
    * Get the Instance of the Annotation of type [T] from the list of annotations' [InstanceMirror]s
    */
-  T fromAms(List<InstanceMirror> ams) {
-    if (_iat.any(ams))
+  T fromAnnotations(List<InstanceMirror> ams) {
+    if (_iat.anyOf(ams))
       return ams.singleWhere(_iat._isType).reflectee as T;
     return null;
   }
@@ -34,17 +34,17 @@ class IsAnnotation<T> {
   /**
    * Check if the Annotation of type [T] is on the reflected annotated object [im]
    */
-  bool onIm(InstanceMirror im) => any(im.type.metadata);
+  bool onInstance(InstanceMirror im) => anyOf(im.type.metadata);
 
   /**
    * Check if the Annotation of type [T] is on the reflected annotated declaration (method or property) [dm]
    */
-  bool onDm(DeclarationMirror dm) => any(dm.metadata);
+  bool onDeclaration(DeclarationMirror dm) => anyOf(dm.metadata);
 
   /**
    * Check if any element of the list of annotations' InstanceMirrors mirros [am] is type [T]
    */
-  bool any(List<InstanceMirror> ams) {
+  bool anyOf(List<InstanceMirror> ams) {
     return ams.any(_isType);
   }
 

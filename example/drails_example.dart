@@ -2,8 +2,11 @@ library drails_example;
 
 import 'package:drails/drails.dart';
 import 'package:logging/logging.dart';
+import 'dart:io';
 
 part 'controllers/persons_controller.dart';
+part 'controllers/login_controller.dart';
+part 'models/user.dart';
 
 initLogging() {
   Logger.root.level = Level.FINE;

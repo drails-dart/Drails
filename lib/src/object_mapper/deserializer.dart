@@ -23,9 +23,12 @@ final Symbol _QN_DATETIME = reflectClass(DateTime).qualifiedName;
  *  Throws [FormatException] if the [jsonStr] is not valid JSON text.
  */
 dynamic deserialize(String jsonStr, Type clazz) {
-  InstanceMirror obj = _initiateClass(reflectClass(clazz));
   Map filler = JSON.decode(jsonStr);
+  if([_QN_INT, _QN_NUM, _QN_BOOL, _QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
+    return filler;
+  }
 
+  InstanceMirror obj = _initiateClass(reflectClass(clazz));
   _fillObject(obj, filler);
 
   return obj.reflectee;
@@ -43,7 +46,7 @@ dynamic deserialize(String jsonStr, Type clazz) {
 List deserializeList(String jsonStr, Type clazz) {
   List returnList = [];
   List filler = JSON.decode(jsonStr);
-  if(reflectClass(clazz).qualifiedName == _QN_INT) {
+  if([_QN_INT, _QN_NUM, _QN_BOOL, _QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
     return filler;
   }
   filler.forEach((item) {
@@ -127,7 +130,7 @@ void _fillObject(InstanceMirror objMirror, Map filler) {
       }
       
       // check if the property is renamed by DartsonProperty
-      Property prop = new GetValueOfAnnotation<Property>().fromDm(decl);
+      Property prop = new GetValueOfAnnotation<Property>().fromDeclaration(decl);
       if (prop != null && prop.name != null) {
         fieldName = prop.name;
       }

@@ -11,6 +11,11 @@ part 'src/server_init.dart';
 part 'src/application_context.dart';
 part 'src/scanners.dart';
 part 'src/annotations.dart';
+
+//Security
+part 'src/security/annotations.dart';
+
+//Object Mapper
 part 'src/object_mapper/serializer.dart';
 part 'src/object_mapper/deserializer.dart';
 part 'src/object_mapper/exceptions.dart';
