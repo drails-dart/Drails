@@ -10,7 +10,7 @@ class LoginController {
     2: new User()
       ..id = 2
       ..name = 'beto'
-      ..password = 'betop'
+      ..password = 'beto'
       ..roles = ['PUBLIC']
   };
   
@@ -22,7 +22,10 @@ class LoginController {
   
 }
 
-bool hasRolePublicOrAdmin(user, AuthorizeIf me) => user.roles.any((role) => ['PUBLIC', 'ADMIN'].any((v) => v == role));
+bool hasRolePublicOrAdmin(user, AuthorizeIf me) => 
+    user.roles.any((role) => 
+        ['PUBLIC', 'ADMIN'].any((v) => 
+            v == role));
 
 @AuthorizeIf(hasRolePublicOrAdmin) //You can use next annotation as shorthand
 //@AuthorizeRoles(const ['PUBLIC', 'ADMIN'])

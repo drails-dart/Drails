@@ -28,16 +28,18 @@ bool authorizeRoles(user, AuthorizeRoles me) =>
  */
 class AuthorizeRoles implements AuthorizeIf {
   final List<String> roles;
-  final IsAuthorized isAuthorized;
-  const AuthorizeRoles(this.roles, [this.isAuthorized = authorizeRoles]);
+  final IsAuthorized isAuthorized = authorizeRoles;
+  const AuthorizeRoles(this.roles);
 }
 
 ///Function that deny access to users that don't have the specified roelse
-bool denyRoles(user, AuthorizeIf me) => !authorizeRoles(user, me);
+bool denyRoles(user, AuthorizeIf me) =>
+    !authorizeRoles(user, me);
   
 /**
  * Annotation that Defines what roles are denied to execute the controller method
  */
 class DenyRoles extends AuthorizeRoles {
-  const DenyRoles(List<String> roles, [IsAuthorized authorizeFunc = denyRoles]) :  super(roles, authorizeFunc) ;
+  final IsAuthorized isAuthorized = denyRoles;
+  const DenyRoles(List<String> roles) :  super(roles) ;
 }

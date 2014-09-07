@@ -162,9 +162,9 @@ void _invokeControllerMethod(
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(controllerIm),
       authorizedForControlled = (_ref1 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1),
       _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(controllerMm),
-      authorizedForMethod = (_ref1 == null && _ref2 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1);
+      authorizedForMethod = (_ref2 == null) ? true : (user == null) ? false : _ref2.isAuthorized(user, _ref2);
   
-  if(authorizedForControlled || authorizedForMethod) {
+  if(authorizedForControlled && authorizedForMethod) {
     var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
     result = result == null ? "" : serialize(result);
     request.response
