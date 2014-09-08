@@ -20,12 +20,14 @@ class ApplicationContext {
   /**
    * Initialize the application Context
    */
-  static void bootstrap() {
+  static void bootstrap(List<Symbol> includedLibs) {
     
-    var dms = currentMirrorSystem()
-        .isolate.rootLibrary.declarations.values.where((dm) => 
-          dm is ClassMirror);
-
+    var dms = [];
+    includedLibs.forEach((inclibrary) {
+      var libs = currentMirrorSystem().findLibrary(inclibrary).declarations.values.where((dm) => dm is ClassMirror);
+      dms.addAll(libs);
+    });
+       
     var componentDms = dms.where((dm) => 
         !dm.isAbstract
         && COMPONENT_NAMES.any((name) => 

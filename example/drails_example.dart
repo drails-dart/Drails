@@ -20,7 +20,12 @@ initLogging() {
 
 void main() {
   initLogging();
-  initServer();
+  initServer([#drails_example]);
+}
+
+//function used for stopping the server after all test passed
+stopServer() {
+  drailsServer.close();
 }
 
 class HelloController extends HiController {

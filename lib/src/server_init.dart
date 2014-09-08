@@ -2,20 +2,22 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
+HttpServer drailsServer;
 
 /**
  * Initialize the server with the given arguments
  */
-void initServer({InternetAddress address , int port : 4040}) {
+void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040}) {
   address = address != null ? address : InternetAddress.LOOPBACK_IP_V4;
   _serverInitLog.fine('address: $address, port: $port');
   
-  ApplicationContext.bootstrap();
+  ApplicationContext.bootstrap(includedLibs);
 
   var controllers = ApplicationContext.controllers;
   
   
   HttpServer.bind(address, port).then((server) {
+    drailsServer = server;
     var router = new Router(server);
 
     controllers.forEach((controller) {
@@ -73,7 +75,8 @@ void initServer({InternetAddress address , int port : 4040}) {
               namedArgs = {},
               _ref,
               i = 0,
-              waitFortInvocation = false;
+              waitFortInvocation = false,
+              removeBrackets = false;
 
           Iterable<String> pathVariables = pathSegments.length <= pathParamBegin ? [] : pathSegments.getRange(pathParamBegin, pathSegments.length);
 
@@ -96,14 +99,16 @@ void initServer({InternetAddress address , int port : 4040}) {
                   .then((data) {
                   try {
                     _serverInitLog.fine('RequestBodyData: $data');
-                    if(parameter.type.simpleName == _QN_LIST) {
-                      if(!(data as String).startsWith('['))
+                    if(parameter.type.qualifiedName == _QN_LIST) {
+                      if(!(data as String).startsWith('[')) {
                         data = '[$data]';
+                        removeBrackets = true;
+                      }
                       positionalArgs.add(deserializeList(data, parameter.type.typeArguments.first.reflectedType));
                     } else {
                       positionalArgs.add(deserialize(data, parameter.type.reflectedType));
                     }
-                    _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request);
+                    _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request, removeBrackets);
                   } catch (e) {
                     print(e);
                     request.response
@@ -134,7 +139,7 @@ void initServer({InternetAddress address , int port : 4040}) {
                 '\n\tnamedArgs: $namedArgs');
             
             if(!waitFortInvocation) 
-              _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request);
+              _invokeControllerMethod(controllerIm, controllerMm, positionalArgs, namedArgs, request, removeBrackets);
           } catch (e) {
             print(e);
             request.response
@@ -156,7 +161,8 @@ void _invokeControllerMethod(
   MethodMirror controllerMm,
   List positionalArgs,
   Map<Symbol, dynamic> namedArgs,
-  HttpRequest request) {
+  HttpRequest request,
+  bool removeBrackets) {
   
   var user = request.session['user'],
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(controllerIm),
@@ -167,6 +173,9 @@ void _invokeControllerMethod(
   if(authorizedForControlled && authorizedForMethod) {
     var result = controllerIm.invoke(controllerMm.simpleName, positionalArgs, namedArgs).reflectee;
     result = result == null ? "" : serialize(result);
+    if(removeBrackets) {
+      result = result.substring(1, result.length - 1);
+    }
     request.response
         ..write(result)
         ..close();

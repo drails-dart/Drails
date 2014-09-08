@@ -3,16 +3,25 @@
 DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
 ##Setup the Server
-To setup a server you just need to call the method `initServer`, for example:
+To setup a server you just need to call the method `initServer` and pass the list of libraries that are going to be taken in count when bootstrapping the application context, for example:
 
+    library drails_example;
+    //... other parts and imports omitted ...
+    
     main() {
-      initServer(); //Initialize a server that listen on localhost:4040
+      initServer([#drails_example]); //Initialize a server that listen on localhost:4040
     }
 
 If you want to define a different address or port for your server, you just need to pass the decided values. For example:
 
     main() {
-      initServer(address: new InternetAddress('<someaddress>'), port: 9090);
+      initServer([#drails_example], address: new InternetAddress('<someaddress>'), port: 9090);
+    }
+    
+Is also good idea to create a function that close/stop the server for testing purpose. For example:
+
+    stopServer() {
+      drailsServer.close();
     }
 
 ##Dependency Injection
@@ -69,7 +78,7 @@ By convention path variables are going to be the required arguments from the met
 If the argument type is HttpRequest, HttpHeaders or HttpSession, this is not going to be mapped as path variable. In contrast, those arguments are going to be passed to the method from the current request.
 
 ###Query parameters
-By convention query parameters are going to be mapped from the optional arguments, for example:
+By convention, query parameters are going to be mapped from the optional arguments, for example:
 
     class PersonsController extends HiController {
       
@@ -195,7 +204,6 @@ and creating your own implementation. Furthermore, you can also create a better 
 * Create Repositories or Store objects to connect to database
 * Add file server
 * Add Exceptions Handlers
-* Handle Serialization Exception
 * Handle bad request exception
 * Add Angular Dart or Polymer Dart client side
 * Handle Cyclic Reference parsing
