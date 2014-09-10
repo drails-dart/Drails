@@ -9,7 +9,7 @@ part 'controllers/authorization_sample_controller.dart';
 part 'models/user.dart';
 
 initLogging() {
-  Logger.root.level = Level.FINE;
+  Logger.root.level = Level.OFF;
 //  hierarchicalLoggingEnabled = true;
 //  new Logger('server_init').level = Level.INFO;
   
@@ -21,11 +21,6 @@ initLogging() {
 void main() {
   initLogging();
   initServer([#drails_example]);
-}
-
-//function used for stopping the server after all test passed
-stopServer() {
-  drailsServer.close();
 }
 
 class HelloController extends HiController {
