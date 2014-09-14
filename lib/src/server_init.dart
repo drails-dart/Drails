@@ -167,11 +167,12 @@ void _invokeControllerMethod(
   
   var user = request.session['user'],
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(instanceMirror),
-      authorizedForControlled = (_ref1 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1),
+      authorizedForController = (_ref1 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1),
       _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror),
+      // !a!b + !ab + ab 
       authorizedForMethod = (_ref2 == null) ? true : (user == null) ? false : _ref2.isAuthorized(user, _ref2);
   
-  if(authorizedForControlled && authorizedForMethod) {
+  if(authorizedForController && authorizedForMethod) {
     var result;
     if(instanceMirror is ClosureMirror) {
       result = instanceMirror.apply(positionalArgs, namedArgs).reflectee;
@@ -186,6 +187,7 @@ void _invokeControllerMethod(
         ..write(result)
         ..close();
   } else {
+    //TODO: convert this to a trhow NotAuthorizedException
     request.response
       ..statusCode = 401
       ..close();
