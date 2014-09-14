@@ -10,8 +10,8 @@ part 'models/user.dart';
 
 initLogging() {
   Logger.root.level = Level.OFF;
-//  hierarchicalLoggingEnabled = true;
-//  new Logger('server_init').level = Level.INFO;
+  hierarchicalLoggingEnabled = true;
+  new Logger('server_init').level = Level.INFO;
   
   Logger.root.onRecord.listen((LogRecord rec) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
@@ -20,6 +20,13 @@ initLogging() {
 
 void main() {
   initLogging();
+  
+  POST['/login'] = (HttpSession session, @RequestBody User user) {
+    var currentUser = users.values.singleWhere((u) => u.name == user.name && u.password == user.password);
+    if(currentUser == null) throw Exception;
+    session['user'] = currentUser; 
+  };
+  
   initServer([#drails_example]);
 }
 
