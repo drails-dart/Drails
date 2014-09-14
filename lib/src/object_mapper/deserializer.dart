@@ -26,6 +26,9 @@ dynamic deserialize(String jsonStr, Type clazz) {
   Map filler = JSON.decode(jsonStr);
   if([_QN_INT, _QN_NUM, _QN_BOOL, _QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
     return filler;
+  } else if(reflectClass(clazz).qualifiedName == _QN_MAP) {
+    //TODO: check if the map cotains complex objects
+    return filler;
   }
 
   InstanceMirror obj = _initiateClass(reflectClass(clazz));
