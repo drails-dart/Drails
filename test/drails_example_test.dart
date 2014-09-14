@@ -2,11 +2,15 @@ import '../example/drails_example.dart' as drails_example;
 import 'package:unittest/unittest.dart';
 import 'package:http/http.dart';
 import 'package:drails/drails.dart';
+import 'dart:io';
+import 'dart:convert';
 
 main() {
   drails_example.main();
+  
   var localhostUrl = 'http://127.0.0.1:4040';
-  group('controller', () {
+  
+  group('controllers', () {
     
     test('root request', () {
       get(localhostUrl).then(expectAsync((response) {
@@ -98,6 +102,115 @@ main() {
         new Client().send(new Request('DELETE', new Uri.http('127.0.0.1:4040', '/persons'))..body = '[1,2]').then(expectAsync((response) {
           expect(response.statusCode, 200);
         }));
+      });
+    });
+    
+    group('-> authorization_sample', () {
+      var loginUrl = localhostUrl + '/login', employeesUrl = localhostUrl + '/employees';
+      
+      group('-> no username password', () {
+
+        test('->  login', () {
+          post(loginUrl).then(expectAsync((Response response) {
+            expect(response.statusCode, 400);
+          }));
+        });
+        
+        test('-> get employee 1', () {
+          get('$employeesUrl/1').then(expectAsync((response) {
+            expect(response.statusCode, 401);
+            expect(response.body, equals(''));
+          }));
+        });
+        
+        test('-> save employee 1', () {
+           put('$employeesUrl/1', body:'{"id": 1,  "name": "lulo"}').then(expectAsync((Response response) {
+             expect(response.statusCode, 401);
+           }));
+         });
+        
+        test('-> save employees', () {
+           post(employeesUrl, body:'{"id": 1,  "name": "lulo"}').then(expectAsync((Response response) {
+             expect(response.statusCode, 401);
+           }));
+         });
+      });
+      
+      group('-> wrong username password', () {
+        test('-> login', () {
+          post(loginUrl, body:'{"name": "lulos",  "password": "lulos"}').then(expectAsync((Response response) {
+            expect(response.statusCode, 400);
+          }));
+        });
+
+        test('-> get employee 1', () {
+          get('$employeesUrl/1').then(expectAsync((response) {
+            expect(response.statusCode, 401);
+            expect(response.body, equals(''));
+          }));
+        });
+              
+        test('-> save employee 1', () {
+           put('$employeesUrl/1', body:'{"id": 1,  "name": "lulo"}').then(expectAsync((Response response) {
+             expect(response.statusCode, 401);
+           }));
+         });
+              
+        test('-> save employees', () {
+           post(employeesUrl, body:'{"id": 1,  "name": "lulo"}').then(expectAsync((Response response) {
+             expect(response.statusCode, 401);
+           }));
+         });
+      });
+      
+      group('-> good', () {
+        var sessionId;
+        test('-> login', () {
+          post(loginUrl, body:'{"name": "lulo",  "password": "lulo"}').then(expectAsync((Response response) {
+            expect(response.statusCode, 200);
+            sessionId = response.headers['set-cookie'].replaceFirst('DARTSESSID=', '').replaceFirst('; Path=/; HttpOnly', '');
+          }));
+        });
+  
+        test('-> get employees 1', () {
+          new HttpClient().get('127.0.0.1', 4040, '/employees/1').then((request) {
+            request.cookies.add(new Cookie('DARTSESSID',sessionId)..path = '/');
+            return request.close();
+          }).then(expectAsync((HttpClientResponse response) {
+            expect(response.statusCode, 200);
+            UTF8.decodeStream(response).then(expectAsync((body) {
+              expect(body, equals('"employee: 1"'));
+            }));
+          }));
+        });
+        
+        test('-> save employees 1', () {
+          new HttpClient().put('127.0.0.1', 4040, '/employees/1').then((request) {
+            request
+                ..cookies.add(new Cookie('DARTSESSID',sessionId)..path = '/')
+                ..write('{"id": 1,  "name": "luis"}');
+            return request.close();
+          }).then(expectAsync((HttpClientResponse response) {
+            expect(response.statusCode, 200);
+            UTF8.decodeStream(response).then(expectAsync((body) {
+              expect(body, equals('"saved employee: 1, {id: 1, name: luis}"'));
+            }));
+          }));
+        });
+
+        test('-> saveAll employee 1', () {
+          new HttpClient().post('127.0.0.1', 4040, '/employees').then((request) {
+            request
+                ..cookies.add(new Cookie('DARTSESSID',sessionId)..path = '/')
+                ..writeln('{"id": 1,  "name": "lulo"}');
+            return request.close();
+          }).then(expectAsync((HttpClientResponse response) {
+            expect(response.statusCode, 200);
+            UTF8.decodeStream(response).then(expectAsync((body) {
+              expect(body, equals('{"id":1,"name":"lulo"}'));
+            }));
+          }));
+        });
       });
     });
     
