@@ -2,6 +2,10 @@
 
 DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
+To get a sample application that uses Drails go to:
+
+https://github.com/luisvt/drails_example
+
 ##Setup the Server
 To setup a server you just need to call the method `initServer` and pass the list of libraries that are going to be taken in count when bootstrapping the application context, for example:
 
@@ -18,11 +22,9 @@ If you want to define a different address or port for your server, you just need
       initServer([#drails_example], address: new InternetAddress('<someaddress>'), port: 9090);
     }
     
-Is also good idea to create a function that close/stop the server for testing purpose. For example:
+If you want to stop the server for any reason, for example after finishing all tests, you could do:
 
-    stopServer() {
-      drailsServer.close();
-    }
+    DRAILS_SERVER.close();
 
 ##Dependency Injection
 The framework has a small dependency injection system that wires Classes with Postfix: Controller, Service, and Repository. For example, you can create a abstract class named 'SomeService':
@@ -138,6 +140,16 @@ If you want to create a REST-API with controllers you could use next:
 Although REST tells that POST and DELETE should only handle one resource, I decide to also handle multiple resources. This is because there are some cases where users need to do that, so in this way reducing the number of queries made to the server.
 
 If you do a POST with id null the server does an INSERT but if the id is present it does an UPDATE.
+
+## Asynchronous Methods (Futures)
+
+If you want to create methods that have an asynchronous behavior like getting data from a database, calling an external service, etc. you only need to return a `Future` object. For example:
+
+    class AsyncEmployeesController {
+  
+      Future<Employee> get(int id) => new Future<Employee>.delayed(new Duration(seconds: 5), () => 
+          employees[id]);
+    }
 
 ## Authorization
 
