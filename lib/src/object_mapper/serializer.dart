@@ -5,8 +5,11 @@ Logger _serLog = new Logger('object_mapper_serializer');
 /**
  * Serializes the [object] to a JSON string.
  */
-String serialize(Object object) {
+String serialize(Object object, [bool parseString = false]) {
   _serLog.fine("Start serializing");
+  
+  if(object is String && !parseString) return object;
+  
   return JSON.encode(objectToSerializable(object));
 }
 
@@ -59,11 +62,9 @@ Object _serializeObject(Object obj) {
   _serLog.fine("Serializing class: ${_getName(classMirror.qualifiedName)}");
 
   Map result = new Map<String,Object>();
-  classMirror.declarations.forEach((sym, decl) {
-    if (!decl.isPrivate &&
-    (decl is VariableMirror || (decl is MethodMirror && decl.isGetter))) {
+  
+  getPublicVariablesFromClass(classMirror).forEach((sym, decl) {
       _pushField(sym, decl, instMirror, result);
-    }
   });
 
   _serLog.fine("Serialization completed.");
