@@ -2,14 +2,25 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
-HttpServer drailsServer;
+/// Instance of the current running server, useful to stop the server.
+HttpServer DRAILS_SERVER;
 
+/// Specifies the URI used to get the main html file
+String CLIENT_URL = 'client.html';
+
+/// Map that mantains the list of URI that could be used to serve files
+Map<String, String> CLIENT_DIR = {
+  'dev': '/../../client/web/',
+  'prod': '/../../client/build/'
+};
+
+///Maps Used to define fast request functions
 Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 
 /**
  * Initialize the server with the given arguments
  */
-void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040}) {
+void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040, String initMode: 'dev'}) {
   address = address != null ? address : InternetAddress.LOOPBACK_IP_V4;
   _serverInitLog.fine('address: $address, port: $port');
   
@@ -18,68 +29,55 @@ void initServer(List<Symbol> includedLibs, {InternetAddress address , int port :
   var controllers = ApplicationContext.controllers;
   
   HttpServer.bind(address, port).then((server) {
-    drailsServer = server;
-    var router = new Router(server);
-
-    controllers.forEach((controller) {
-      var controllerIm = reflect(controller),
-          controllerCm = controllerIm.type,
-          controllerName = MirrorSystem.getName(controllerCm.simpleName).replaceFirst('Controller', '').toLowerCase(),
-          controllerMms = getMethodMirrorsFromClass(controllerCm);
-      
-      controllerMms.forEach((MethodMirror controllerMm) {
-        var controllerMethodName = MirrorSystem.getName(controllerMm.simpleName);
-
-        var urlPath = '/$controllerName',
-            method = 'GET',
-            wordPath = '/(\\w+)',
-            pathParamBegin = 1;
-        switch (controllerMethodName) {
-          case 'get':
-            urlPath += wordPath;
-            break;
-          case 'getAll':
-            break;
-          case 'save':
-            urlPath += wordPath;
-            method = 'PUT';
-            break;
-          case 'saveAll':
-            method = 'POST';
-            break;
-          case 'delete':
-            urlPath += wordPath;
-            method = 'DELETE';
-            break;
-          case 'deleteAll':
-            method = 'DELETE';
-            break;
-          default:
-            urlPath += '/$controllerMethodName';
-            pathParamBegin = 2;
-            if(new IsAnnotation<_Post>().onDeclaration(controllerMm)) {
-              method = 'POST';
-            }
-            controllerMm.parameters.forEach((param) {
-              if(!new IsAnnotation<_RequestBody>().onDeclaration(param)
-                  && param.type != reflectClass(HttpRequest)
-                  && param.type != reflectClass(HttpSession))
-              urlPath += wordPath;
-            });
-        }
-
-        _serverInitLog.info('method: $method, url: $urlPath');
-
-        router.serve(new UrlPattern(urlPath), method: method).listen((request) {
-          _process(request, controllerIm, controllerMm, pathParamBegin);
-        });
-      });
-    });
-
-    router.serve('/').listen((req) => req.response
-        ..write("Hello")
-        ..close());
+    DRAILS_SERVER = server;
     
+    var router = new Router(server);
+    
+    _initFileServer(router, initMode);
+
+    _initProxyServer(router);
+    
+    controllers.forEach((controller) => _mapControllers(controller, router));
+  });
+}
+
+void _initFileServer(Router router, String initMode) {
+    var clientFiles = dirname(Platform.script.toFilePath()) + CLIENT_DIR[initMode];
+    
+    _serverInitLog.info('clientFiles: $clientFiles');
+    
+    var virDir = new VirtualDirectory(clientFiles)
+      ..allowDirectoryListing = true
+      ..jailRoot = false
+      ..serve(router.defaultStream)
+      ..errorPageHandler = (HttpRequest request) {
+          _serverInitLog.warning("Resource not found ${request.uri.path}");
+          request.response
+              ..statusCode = HttpStatus.NOT_FOUND
+              ..close();
+        };
+
+    var dirHandler;
+    dirHandler = (Directory dir, HttpRequest request) {
+      if(dir.path == (clientFiles + './')) {
+        var filePath = clientFiles + CLIENT_URL;
+        _serverInitLog.info("Serving: $filePath");
+        
+        Uri fileUri = Platform.script.resolve(filePath);
+        File file = new File(fileUri.toFilePath());
+        virDir.serveFile(file, request);
+      } else {
+        virDir
+            ..directoryHandler = null
+            ..serveRequest(request).then((r) {virDir.directoryHandler = dirHandler;});
+      }
+    };
+    
+    virDir.directoryHandler = dirHandler;
+}
+
+void _initProxyServer(Router router) {
+
     <String, Map<String, Function>>{'GET': GET, 'POST': POST, 'PUT': PUT, 'DELETE': DELETE}.forEach((method, methodsMap) {
       methodsMap.forEach((url, function) {
         _serverInitLog.info('method: $method, url: $url');
@@ -88,6 +86,60 @@ void initServer(List<Symbol> includedLibs, {InternetAddress address , int port :
           _process(request, closureMirror, closureMirror.function);
         });
       });
+    });
+}
+
+void _mapControllers(Object controller, Router router) {
+  var controllerIm = reflect(controller),
+      controllerCm = controllerIm.type,
+      controllerName = MirrorSystem.getName(controllerCm.simpleName).replaceFirst('Controller', '').toLowerCase(),
+      controllerMms = getPublicMethodsFromClass(controllerCm);
+  
+  controllerMms.forEach((symbol, MethodMirror controllerMm) {
+    var controllerMethodName = MirrorSystem.getName(controllerMm.simpleName);
+
+    var urlPath = '/$controllerName',
+        method = 'GET',
+        wordPath = '/(\\w+)',
+        pathParamBegin = 1;
+    switch (controllerMethodName) {
+      case 'get':
+        urlPath += wordPath;
+        break;
+      case 'getAll':
+        break;
+      case 'save':
+        urlPath += wordPath;
+        method = 'PUT';
+        break;
+      case 'saveAll':
+        method = 'POST';
+        break;
+      case 'delete':
+        urlPath += wordPath;
+        method = 'DELETE';
+        break;
+      case 'deleteAll':
+        method = 'DELETE';
+        break;
+      default:
+        urlPath += '/$controllerMethodName';
+        pathParamBegin = 2;
+        if(new IsAnnotation<_Post>().onDeclaration(controllerMm)) {
+          method = 'POST';
+        }
+        controllerMm.parameters.forEach((param) {
+          if(!new IsAnnotation<_RequestBody>().onDeclaration(param)
+              && param.type != reflectClass(HttpRequest)
+              && param.type != reflectClass(HttpSession))
+          urlPath += wordPath;
+        });
+    }
+
+    _serverInitLog.info('method: $method, url: $urlPath');
+
+    router.serve(new UrlPattern(urlPath), method: method).listen((request) {
+      _process(request, controllerIm, controllerMm, pathParamBegin);
     });
   });
 }
@@ -114,8 +166,7 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
         } else if( (parameter.isNamed || new IsAnnotation<RequestParam>().onDeclaration(parameter))
             && (_ref = request.uri.queryParameters[MirrorSystem.getName(parameter.simpleName)]) != null) {
           namedArgs[parameter.simpleName] = _ref;
-        } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) 
-            && data.isNotEmpty) {
+        } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) && data.isNotEmpty) {
           if(parameter.type.qualifiedName == _QN_LIST) {
             if(!(data as String).startsWith('[')) {
               data = '[$data]';
@@ -169,7 +220,6 @@ void _invokeControllerMethod(
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(instanceMirror),
       authorizedForController = (_ref1 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1),
       _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror),
-      // !a!b + !ab + ab 
       authorizedForMethod = (_ref2 == null) ? true : (user == null) ? false : _ref2.isAuthorized(user, _ref2);
   
   if(authorizedForController && authorizedForMethod) {
@@ -179,17 +229,28 @@ void _invokeControllerMethod(
     } else {
       result = instanceMirror.invoke(methodMirror.simpleName, positionalArgs, namedArgs).reflectee;
     }
-    result = result == null ? "" : serialize(result);
-    if(removeBrackets) {
-      result = result.substring(1, result.length - 1);
+    
+    if(result is Future) {
+      result.then((value) => 
+          _writeResponse(value, removeBrackets, request));
+    } else {
+      _writeResponse(result, removeBrackets, request);
     }
-    request.response
-        ..write(result)
-        ..close();
+    
   } else {
     //TODO: convert this to a trhow NotAuthorizedException
     request.response
       ..statusCode = 401
       ..close();
   }
+}
+
+void _writeResponse(result, bool removeBrackets, HttpRequest request) {
+  result = result == null ? "" : serialize(result);
+  if(removeBrackets) {
+    result = result.substring(1, result.length - 1);
+  }
+  request.response
+      ..write(result)
+      ..close();
 }
