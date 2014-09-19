@@ -62,10 +62,8 @@ class GetDeclarationsAnnotatedWith<T, DM> {
    * Get the iterable of [DeclarationMirror] that are annotated with [T]
    */
   Iterable<DM> from(InstanceMirror im) =>
-      new List<DM>.from(im.type.declarations.values
-          .where((declartionMirror) => 
-              declartionMirror is DM
-              && declartionMirror.metadata.any((am) => am.reflectee is T)));
+      getDeclarationsFromClassIf(im.type, (dm) => dm is DM && dm.metadata.any((am) => am.reflectee is T)).values;
+  
 
 }
 
@@ -87,24 +85,36 @@ class GetVariablesAnnotatedWith<T> {
    */
   Iterable<VariableMirror> from(InstanceMirror im) => new GetDeclarationsAnnotatedWith<T, VariableMirror>().from(im);
 }
-/**
- * Get the list of [MethodMirrors] from [ClassMirror] cm
- */
-Iterable<MethodMirror> getMethodMirrorsFromClass(ClassMirror cm) {
-  var methodMirrors = [];
+
+typedef bool _IfDeclarationFunct(DeclarationMirror dm);
+
+/// Get the List of [DeclarationMirror]s from [ClassMirror] cm if the [ifDeclarationFunct] is true
+getDeclarationsFromClassIf(ClassMirror cm, _IfDeclarationFunct ifDeclarationFunct) {
+
+  var dms = {};
 
   if (cm.superclass != reflectClass(Object)) {
-    methodMirrors.addAll(getMethodMirrorsFromClass(cm.superclass));
+    dms.addAll(getDeclarationsFromClassIf(cm.superclass, ifDeclarationFunct));
   }
-
-  return methodMirrors..addAll(
-      cm.declarations.values.where((dm) => 
-        dm is MethodMirror && (dm as MethodMirror).isRegularMethod));
+               
+  cm.declarations.forEach((symbol, dm) {
+    if(ifDeclarationFunct(dm)) {
+      dms.putIfAbsent(symbol, () => dm);
+    }
+  });
+  
+  return dms;
 }
 
-/**
- * Gets the object that extends the [injectableCm] from [declarationCms]
- */
+/// Get the list of public [MethodMirror] from [ClassMirror] [cm]
+Map<Symbol, MethodMirror> getPublicMethodsFromClass(ClassMirror cm) => 
+    getDeclarationsFromClassIf(cm, (dm) => !dm.isPrivate && dm is MethodMirror && (dm as MethodMirror).isRegularMethod);
+
+/// Get the list of public [VariableMirror] from [ClassMirror] [cm]
+Map<Symbol, VariableMirror> getPublicVariablesFromClass(ClassMirror cm)=> 
+    getDeclarationsFromClassIf(cm, (dm) => !dm.isPrivate && dm is VariableMirror || (dm is MethodMirror && dm.isGetter)); 
+
+/// Gets the object that extends the [injectableCm] from [declarationCms]
 Object getObjectThatExtend(ClassMirror injectableCm, Iterable<DeclarationMirror> declarationCms) {
   ClassMirror result;
   int counter = 0, counter2 = 0;
