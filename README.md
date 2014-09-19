@@ -210,15 +210,11 @@ and creating your own implementation. Furthermore, you can also create a better 
 ##TODOs
 
 * Create Dependency Injection Tests
-* Create Controller Tests
 * Create Generic Rest Controller which should be extended for other controllers
 * Add Object Relational Mapping (ORM) or Domain Object Model (DOM) support
 * Create Repositories or Store objects to connect to database
-* Add file server
 * Add Exceptions Handlers
-* Handle bad request exception
 * Add Angular Dart or Polymer Dart client side
 * Handle Cyclic Reference parsing
 * Handle hashcode, _ref or @id variable to deserialize objects that don't have ids (for inserting purposes).
-* Add capacity to expose global functions
  
