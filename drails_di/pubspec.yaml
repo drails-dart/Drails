@@ -6,5 +6,6 @@ homepage: https://github.com/luisvt/Drails/tree/master/drails_di
 environment:
   sdk: '>=1.6.0'
 dependencies:
+  #drails_commons: '>=0.0.1 <0.0.3'
   drails_commons:
     path: ../drails_commons
