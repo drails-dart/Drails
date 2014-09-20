@@ -1,4 +1,4 @@
-part of drails;
+part of dson;
 
 Logger _serLog = new Logger('object_mapper_serializer');
 

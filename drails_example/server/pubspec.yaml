@@ -1,0 +1,10 @@
+name: server
+author: Luis Vargas
+description: A sample command-line application
+environment:
+  sdk: '>=1.6.0'
+dependencies:
+  drails:
+    path: ../../drails
+  logging: any
+  unittest: any

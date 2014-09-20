@@ -1,17 +1,17 @@
-part of drails;
+part of dson;
 
 final _desLog = new Logger('object_mapper_deserializer');
 
 const _getName = MirrorSystem.getName;
 
-final Symbol _QN_STRING = reflectClass(String).qualifiedName;
-final Symbol _QN_NUM = reflectClass(num).qualifiedName;
-final Symbol _QN_INT = reflectClass(int).qualifiedName;
-final Symbol _QN_BOOL = reflectClass(bool).qualifiedName;
-final Symbol _QN_LIST = reflectClass(List).qualifiedName;
-final Symbol _QN_MAP = reflectClass(Map).qualifiedName;
-final Symbol _QN_OBJECT = reflectClass(Object).qualifiedName;
-final Symbol _QN_DATETIME = reflectClass(DateTime).qualifiedName;
+final Symbol QN_STRING = reflectClass(String).qualifiedName;
+final Symbol QN_NUM = reflectClass(num).qualifiedName;
+final Symbol QN_INT = reflectClass(int).qualifiedName;
+final Symbol QN_BOOL = reflectClass(bool).qualifiedName;
+final Symbol QN_LIST = reflectClass(List).qualifiedName;
+final Symbol QN_MAP = reflectClass(Map).qualifiedName;
+final Symbol QN_OBJECT = reflectClass(Object).qualifiedName;
+final Symbol QN_DATETIME = reflectClass(DateTime).qualifiedName;
 
 /**
  * Creates a new instance of [clazz], parses the json in [jsonStr] and puts
@@ -24,9 +24,9 @@ final Symbol _QN_DATETIME = reflectClass(DateTime).qualifiedName;
  */
 dynamic deserialize(String jsonStr, Type clazz) {
   Map filler = JSON.decode(jsonStr);
-  if([_QN_INT, _QN_NUM, _QN_BOOL, _QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
+  if([QN_INT, QN_NUM, QN_BOOL, QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
     return filler;
-  } else if(reflectClass(clazz).qualifiedName == _QN_MAP) {
+  } else if(reflectClass(clazz).qualifiedName == QN_MAP) {
     //TODO: check if the map cotains complex objects
     return filler;
   }
@@ -49,7 +49,7 @@ dynamic deserialize(String jsonStr, Type clazz) {
 List deserializeList(String jsonStr, Type clazz) {
   List returnList = [];
   List filler = JSON.decode(jsonStr);
-  if([_QN_INT, _QN_NUM, _QN_BOOL, _QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
+  if([QN_INT, QN_NUM, QN_BOOL, QN_STRING].any((v) => v == reflectClass(clazz).qualifiedName)) {
     return filler;
   }
   filler.forEach((item) {
@@ -222,51 +222,51 @@ Object _convertValue(TypeMirror valueType, Object value, String key) {
 
     _desLog.fine('Handle generic');
     // handle generic lists
-    if (varMirror.originalDeclaration.qualifiedName == _QN_LIST) {
+    if (varMirror.originalDeclaration.qualifiedName == QN_LIST) {
       return _convertGenericList(varMirror, value);
-    } else if (varMirror.originalDeclaration.qualifiedName == _QN_MAP) {
+    } else if (varMirror.originalDeclaration.qualifiedName == QN_MAP) {
       // handle generic maps
       return _convertGenericMap(varMirror, value);
     }
-  } else if (valueType.qualifiedName == _QN_STRING) {
+  } else if (valueType.qualifiedName == QN_STRING) {
     if (value is String) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "String", key);
     }
-  } else if (valueType.qualifiedName == _QN_NUM) {
+  } else if (valueType.qualifiedName == QN_NUM) {
     if (value is num || value is int) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "num", key);
     }
-  } else if (valueType.qualifiedName == _QN_INT) {
+  } else if (valueType.qualifiedName == QN_INT) {
     if (value is int || value is num) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "int", key);
     }
-  } else if (valueType.qualifiedName == _QN_BOOL) {
+  } else if (valueType.qualifiedName == QN_BOOL) {
     if (value is bool) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "bool", key);
     }
-  } else if (valueType.qualifiedName == _QN_LIST) {
+  } else if (valueType.qualifiedName == QN_LIST) {
     if (value is List) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "List", key);
     }
-  } else if (valueType.qualifiedName == _QN_MAP) {
+  } else if (valueType.qualifiedName == QN_MAP) {
     if (value is Map) {
       return value;
     } else {
       throw new IncorrectTypeTransform(value, "Map", key);
     }
-  } else if (valueType.qualifiedName == _QN_OBJECT) {
+  } else if (valueType.qualifiedName == QN_OBJECT) {
     return value;
-  } else if (valueType.qualifiedName == _QN_DATETIME) {
+  } else if (valueType.qualifiedName == QN_DATETIME) {
     return DateTime.parse(value);
   } else {
     var obj = _initiateClass(valueType);
@@ -324,10 +324,10 @@ InstanceMirror _initiateClass(ClassMirror classMirror) {
     obj = classMirror.newInstance(const Symbol(""), []);
     
     _desLog.fine("Created instance of type: ${_getName(obj.type.qualifiedName)}");
-  } else if (classMirror.qualifiedName == _QN_LIST) {
+  } else if (classMirror.qualifiedName == QN_LIST) {
     _desLog.fine('No constructor for list found, try to run empty one');
     obj = reflect([]);
-  } else if (classMirror.qualifiedName == _QN_MAP) {
+  } else if (classMirror.qualifiedName == QN_MAP) {
     _desLog.fine('No constructor for map found');
     obj = reflect({});
   } else {

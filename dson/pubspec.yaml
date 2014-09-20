@@ -1,0 +1,10 @@
+name: dson
+version: 0.1.1
+author: Luis Vargas
+description: Convert Objects to Json and Json to Objects
+homepage: https://bitbucket.org/luisvargastijerino/dson
+documentation: https://bitbucket.org/luisvargastijerino/dson/wiki/Home
+dependencies:
+  drails_commons:
+    path: ../drails_commons
+  unittest: any

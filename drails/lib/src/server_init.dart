@@ -167,7 +167,7 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
             && (_ref = request.uri.queryParameters[MirrorSystem.getName(parameter.simpleName)]) != null) {
           namedArgs[parameter.simpleName] = _ref;
         } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) && data.isNotEmpty) {
-          if(parameter.type.qualifiedName == _QN_LIST) {
+          if(parameter.type.qualifiedName == QN_LIST) {
             if(!(data as String).startsWith('[')) {
               data = '[$data]';
               removeBrackets = true;

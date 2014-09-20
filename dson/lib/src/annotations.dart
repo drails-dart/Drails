@@ -1,4 +1,4 @@
-part of drails;
+part of dson;
 
 /**
  * Annotation that tells parser to ignore a variable or getter

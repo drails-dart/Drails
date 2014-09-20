@@ -1,0 +1,8 @@
+name: drails_commons
+version: 0.0.1
+author: Luis Vargas <luisvargastijerino@gmail.com>
+description: Package used from drails_server and can be shared for other libraies, includent client side libraries.
+environment:
+  sdk: '>=1.6.0'
+dependencies:
+  logging: any

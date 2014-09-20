@@ -1,23 +1,15 @@
-part of drails;
+part of drails_commons;
 
-/**
- * Get Value of annotations of Type [T] on [InstanceMirror]s and [DeclarationMirror]s
- */
+///  Get Value of annotations of Type [T] on [InstanceMirror]s and [DeclarationMirror]s
 class GetValueOfAnnotation<T> {
  final _iat = new IsAnnotation<T>();
-  /**
-   * Get the Instance of the Annotation of type [T] from the reflected annotated object [im]
-   */
+  ///  Get the Instance of the Annotation of type [T] from the reflected annotated object [im]
   T fromInstance(InstanceMirror im) => fromAnnotations(im.type.metadata);
 
-  /**
-   * Get the Instance of the Annotation of type [T] from the reflected annotated declaration (method or property) [obj]
-   */
+  ///  Get the Instance of the Annotation of type [T] from the reflected annotated declaration (method or property) [obj]
   T fromDeclaration(DeclarationMirror dm) => fromAnnotations(dm.metadata);
 
-  /**
-   * Get the Instance of the Annotation of type [T] from the list of annotations' [InstanceMirror]s
-   */
+  /// Get the Instance of the Annotation of type [T] from the list of annotations' [InstanceMirror]s
   T fromAnnotations(List<InstanceMirror> ams) {
     if (_iat.anyOf(ams))
       return ams.singleWhere(_iat._isType).reflectee as T;
@@ -26,63 +18,41 @@ class GetValueOfAnnotation<T> {
 
 }
 
-/**
- * Check if Annotation is on [InstanceMirror] or [DeclarationMirror]
- */
+///  Check if Annotation is on [InstanceMirror] or [DeclarationMirror]
 class IsAnnotation<T> {
 
-  /**
-   * Check if the Annotation of type [T] is on the reflected annotated object [im]
-   */
+  ///  Check if the Annotation of type [T] is on the reflected annotated object [im]
   bool onInstance(InstanceMirror im) => anyOf(im.type.metadata);
 
-  /**
-   * Check if the Annotation of type [T] is on the reflected annotated declaration (method or property) [dm]
-   */
+  ///  Check if the Annotation of type [T] is on the reflected annotated declaration (method or property) [dm]
   bool onDeclaration(DeclarationMirror dm) => anyOf(dm.metadata);
 
-  /**
-   * Check if any element of the list of annotations' InstanceMirrors mirros [am] is type [T]
-   */
+  ///  Check if any element of the list of annotations' InstanceMirrors mirros [am] is type [T]
   bool anyOf(List<InstanceMirror> ams) {
     return ams.any(_isType);
   }
 
-  /**
-   * Checks if the annotation [InstanceMirror] is type [T]
-   */
+  ///  Checks if the annotation [InstanceMirror] is type [T]
   bool _isType(InstanceMirror am) => am.reflectee is T;
 }
 
-/**
- * Get Declarations (methods and variables) annotated with [T] and are type [DM]
- */
+///  Get Declarations (methods and variables) annotated with [T] and are type [DM]
 class GetDeclarationsAnnotatedWith<T, DM> {
-  /**
-   * Get the iterable of [DeclarationMirror] that are annotated with [T]
-   */
+  ///  Get the iterable of [DeclarationMirror] that are annotated with [T]
   Iterable<DM> from(InstanceMirror im) =>
       getDeclarationsFromClassIf(im.type, (dm) => dm is DM && dm.metadata.any((am) => am.reflectee is T)).values;
   
 
 }
 
-/**
- * Get List of methods annotated with [T]
- */
+///  Get List of methods annotated with [T]
 class GetMethodsAnnotatedWith<T> {
-  /**
-   * Get List of methods annotated with [T] from the InstanceMirror [im]
-   */
+  ///  Get List of methods annotated with [T] from the InstanceMirror [im]
   Iterable<MethodMirror> from(InstanceMirror im) => new GetDeclarationsAnnotatedWith<T, MethodMirror>().from(im);
 }
-/**
- * Get List of variables annotated with [T]
- */
+///  Get List of variables annotated with [T]
 class GetVariablesAnnotatedWith<T> {
-  /**
-   * Get List of variables annotated with [T] from the InstanceMirror [im]
-   */
+  ///  Get List of variables annotated with [T] from the InstanceMirror [im]
   Iterable<VariableMirror> from(InstanceMirror im) => new GetDeclarationsAnnotatedWith<T, VariableMirror>().from(im);
 }
 

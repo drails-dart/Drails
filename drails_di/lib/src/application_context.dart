@@ -1,4 +1,4 @@
-part of drails;
+part of drails_di;
 
 final _appContextlog = new Logger('application_context');
 

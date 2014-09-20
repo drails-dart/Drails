@@ -1,6 +1,6 @@
 library test_dartson;
 
-import '../lib/drails.dart';
+import 'package:dson/dson.dart';
 import 'package:unittest/unittest.dart';
 
 
