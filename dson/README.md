@@ -1,107 +1,130 @@
-# DSON Object Mapper
+# dson
 
-The porpouse of this library is to convert Objects to JSON and JSON Objects using reflection (simillar approch to Jackson and Gson Java Object Mappers).
+dson is a dart library which converts Dart Objects into their JSON representation. It helps you keep your code clean of `fromJSON` and `toJSON` functions by using dart:mirrors reflection. **It works after dart2js compiling.**
 
-##JSON to Object
-To convert JSON to a Dart Object you need to create a library wich contains your PODO(Pure Old Dart Object):
-    
-    library myclass_library;
-    
-    class MyNestedClass {
-      String name;
-    }
-    
-    class MyClass {
-      int i, j;
-      String greeting;
-      MyNestedClass myNestedClass;
-      int get sum => i + j;
-      List<int> intList;
-      List<String> stringList;
-      List<MyNestedClass> myNestedClassList;
-    
-      MyClass();
-    }
+This library is a fork from [dartson](https://github.com/eredo/dartson). I removed transformers and add datetime parsing and other minor changes.
 
-And then import it in the libray that is in charge of converting the object:
-    
-    import "package:DSON/ObjectMapper.dart";
-    import "myclass_library.dart";
-    
-    main() {
-    
-       MyClass myObject = Reader.jsonToObject(
-            '{'
-                '"greeting": "hello, there",'
-                '"i": 3,'
-                '"j": 5,'
-                '"intList": [1, 2, 3, 4, 5],'
-                '"stringList": ["string1", "string2"],'
-                '"myNestedClass": {'
-                      '"name": "someName"'
-                '},'
-                '"myNestedClassList": ['
-                   '{'
-                     '"name": "someName1"'
-                   '},{'
-                     '"name": "someName2"'
-                   '}'
-                ']'
-            '}', MyClass, "myclass_library");
-    
-      print(myObject.i); // prints 3
-      print(myObject.j); // prints 5
-      print(myObject.greeting); //prints "hello, there"
-      print(myObject.myNestedClass.name); // prints "someName"
-      print(myObject.myNestedClassList[0].name); // prints "someName1"
-      print(myObject.myNestedClassList[1].name); // prints "someName2"
-    }
+## Serializing objects in dart
 
-##JSON to List of Objects
-Basically is the same as converting JSON to an object, you just need to pass the type of the list that you want to convert:
+```dart
+library example;
 
-    import "package:DSON/object_mapper.dart";
-    import "myclass_library.dart";
-    
-    main() {
-    
-       var myNestedClassList = Reader.jsontoListOfObjects(
-          '['
-            '{'
-              '"name": "someName1"'
-            '},{'
-              '"name": "someName2"'
-            '}'
-          ']', MyNestedClass, "myclass_library");
-    
-        print(myNestedClassList[0].name); // print "someName1"
-        print(myNestedClassList[1].name); // print "someName2"
-    }
+import 'package:dson/dson.dart';
 
-Note that the class **MyNestedClass** is inside a library. This is because a class cannot be converted if it is not inside a library. 
+@MirrorsUsed(targets:const['example'],override:'*')
+import 'dart:mirrors';
 
+class EntityClass {
+  String name;
+  
+  @Property(name:"renamed")
+  bool otherName;
+  
+  @ignore
+  String notVisible;
+  
+  // private members are never serialized
+  String _private = "name";
+  
+  String get doGetter => _private;
+}
 
-##Object to JSON
-To convert from an object to JSON you just need to declare the class, instantiate the object and convert it:
+void main() {
+  EntityClass object = new EntityClass()
+    ..name = "test";
+    ..otherName = "blub";
+    ..notVisible = "hallo";
+  
+  String jsonString = serialize(object);
+  print(jsonString);
+  // will return: '{"name":"test","renamed":"blub","doGetter":"name"}'
+}
+```
 
-    class MyNestedClass {
-      String name;
-    }
-    
-    class MyClass {
-      int i, j;
-      MyNestedClass myNestedClass;
-      int get sum => i + j;
-    
-      MyClass(this.i, this.j);
-    }
-    
-    main() {
-    
-      MyClass myClass = new MyClass(3, 5)
-        ..myNestedClass = (new MyNestedClass()..name = "luis");
+## Parsing json to dart object
 
-      print(Writer.objectToJson(myClass)) //resutl: '{"i":3,"j":5,"myNestedClass":{"name":"luis"},"sum":8}'));
-    }
-    
+```dart
+library example;
 
+import 'package:dson/dson.dart';
+
+@MirrorsUsed(targets:const['example'],override:'*')
+import 'dart:mirrors';
+
+class EntityClass {
+  String name;
+  String _setted;
+  
+  @dsonProperty(name:"renamed")
+  bool otherName;
+  
+  @dsonProperty(ignore:true)
+  String notVisible;
+  
+  List<EntityClass> children;
+  
+  set setted(String s) => _setted = s;
+  String get setted => _setted;
+}
+
+void main() {
+  EntityClass object = parse('{"name":"test","renamed":"blub","notVisible":"it is", "setted": "awesome"}', EntityClass);
+  
+  print(object.name); // > test
+  print(object.otherName); // > blub
+  print(object.notVisible); // > it is
+  print(object.setted); // > awesome
+  
+  // to parse a list of items use [parseList]
+  List<EntityClass> list = parseList('[{"name":"test", "children": [{"name":"child1"},{"name":"child2"}]},{"name":"test2"}]', EntityClass);
+  print(list.length); // > 2
+  print(list[0].name); // > test
+  print(list[0].children[0].name); // > child1
+}
+```
+
+## Mapping Maps and Lists to dart objects
+Frameworks like Angular.dart come with several HTTP services which already transform the HTTP response to a map using JSON.encode. To use those encoded Maps or Lists use `map` and `mapList`.
+
+```dart
+library example;
+
+import 'package:dson/dson.dart';
+
+@MirrorsUsed(targets:const['example'],override:'*')
+import 'dart:mirrors';
+
+class EntityClass {
+  String name;
+  String _setted;
+  
+  @dsonProperty(name:"renamed")
+  bool otherName;
+  
+  @dsonProperty(ignore:true)
+  String notVisible;
+  
+  List<EntityClass> children;
+  
+  set setted(String s) => _setted = s;
+  String get setted => _setted;
+}
+
+void main() {
+  EntityClass object = map({"name":"test","renamed":"blub","notVisible":"it is", "setted": "awesome"}, EntityClass);  
+  print(object.name); // > test
+  print(object.otherName); // > blub
+  print(object.notVisible); // > it is
+  print(object.setted); // > awesome
+  
+  // to parse a list of items use [parseList]
+  List<EntityClass> list = mapList([{"name":"test", "children": [{"name":"child1"},{"name":"child2"}]},{"name":"test2"}], EntityClass);
+  print(list.length); // > 2
+  print(list[0].name); // > test
+  print(list[0].children[0].name); // > child1
+}
+```
+
+## TODO
+
+- Handle recrusive errors
