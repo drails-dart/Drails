@@ -8,7 +8,7 @@ environment:
 dependencies:
   #drails_di: '>=0.0.1 <0.0.3'
   #dson: '>=0.1.1 <0.1.2'
- drails_di:
+  drails_di:
     path: ../drails_di
   dson:
     path: ../dson
