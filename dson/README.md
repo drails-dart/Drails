@@ -55,10 +55,10 @@ class EntityClass {
   String name;
   String _setted;
   
-  @dsonProperty(name:"renamed")
+  @Property(name:"renamed")
   bool otherName;
   
-  @dsonProperty(ignore:true)
+  @ignore
   String notVisible;
   
   List<EntityClass> children;
@@ -98,10 +98,10 @@ class EntityClass {
   String name;
   String _setted;
   
-  @dsonProperty(name:"renamed")
+  @Property(name:"renamed")
   bool otherName;
   
-  @dsonProperty(ignore:true)
+  @ignore
   String notVisible;
   
   List<EntityClass> children;
