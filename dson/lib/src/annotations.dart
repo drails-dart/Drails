@@ -33,3 +33,9 @@ class Property {
   String toString() => "DartsonProperty: Name: ${name}";
 }
 
+///this annotation describes if the objects contains ciclical reference to other objects
+const cyclical = const Cyclical();
+
+class Cyclical {
+  const Cyclical();
+}
