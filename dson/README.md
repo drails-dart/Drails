@@ -196,7 +196,7 @@ The same applies for lists:
    }
 ```
     
-Without the annotation `@cyclical` the program is going to throw a stack overflow error caused by the serializing of the cyclical objects.
+Without the annotation `@cyclical` the program is going to throw a stack overflow error caused by the serializing of cyclical objects.
 
 ## Parsing json to dart object
 
