@@ -129,6 +129,74 @@ void cyclic_reference_serialize() {
                 r'\}'));
     });
   });
+  
+  group('ciclical list test with id >', () {
+    
+    
+    var student1 = new Student()
+        ..id = 1
+        ..name = 'student1',
+      student2 = new Student()
+        ..id = 2
+        ..name = 'student2',
+      student3 = new Student()
+        ..id = 3
+        ..name = 'student3',
+      course1 = new Course()
+        ..id = 1
+        ..beginDate = new DateTime.utc(2015, 1, 1)
+        ..students = [student1, student2],
+      course2 = new Course()
+        ..id = 2
+        ..beginDate = new DateTime.utc(2015, 1, 2)
+        ..students = [student2, student3],
+      course3 = new Course()
+        ..id = 3
+        ..beginDate = new DateTime.utc(2015, 1, 3)
+        ..students = [student1, student3];
+    
+    student1.courses = [course1, course3];
+    student2.courses = [course1, course2];
+    student3.courses = [course2, course3];
+    
+    test('serializing student1 without courses', () {
+      expect(serialize(student1), '{"id":1,"name":"student1","courses":[{"id":1},{"id":3}]}');
+    });
+    
+    test('serializing student1 with courses', () {
+      expect(serialize(student1, depth: ['courses']), 
+          '{'
+            '"id":1,'
+            '"name":"student1",'
+            '"courses":['
+              '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":[{"id":1},{"id":2}]},'
+              '{"id":3,"beginDate":"2015-01-03T00:00:00.000Z","students":[{"id":1},{"id":3}]}'
+            ']'
+          '}');
+    });
+    
+    test('serializing student1.courses without students', () {
+      expect(serialize(student1.courses), 
+          '['
+            '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":[{"id":1},{"id":2}]},'
+            '{"id":3,"beginDate":"2015-01-03T00:00:00.000Z","students":[{"id":1},{"id":3}]}'
+          ']');
+    });
+
+    test('serializing student1.courses with students', () {
+      expect(serialize(student2.courses, depth: ['students']), 
+          '['
+            '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":['
+              '{"id":1,"name":"student1","courses":[{"id":1},{"id":3}]},'
+              '{"id":2,"name":"student2","courses":[{"id":1},{"id":2}]}'
+            ']},'
+            '{"id":2,"beginDate":"2015-01-02T00:00:00.000Z","students":['
+              '{"id":2,"name":"student2","courses":[{"id":1},{"id":2}]},'
+              '{"id":3,"name":"student3","courses":[{"id":2},{"id":3}]}'
+            ']}'
+          ']');
+    }); 
+  });
         
 }
 
@@ -172,4 +240,21 @@ class Address2 {
   String postalCode;
   
   Employee2 owner;
+}
+
+@cyclical
+class Student {
+  int id;
+  String name;
+  
+  List<Course> courses;
+}
+
+@cyclical
+class Course {
+  int id;
+  
+  DateTime beginDate;
+  
+  List<Student> students;
 }

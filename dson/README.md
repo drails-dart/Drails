@@ -125,8 +125,77 @@ To serialize objects that contains Cyclical References it would be needed to use
     }
 ```
 
-as you can see employee has an address and the address has the employee as owner. If the property `id` is not present in the object then it is going to take the `hashcode` value from the object as reference. And finally, the `depth` parameter passed to serialize function tells serializer how deep you want to go throw the reference. This help us not only to avoid cyclical reference, but to determine what referenced objects should be serialized. 
+as you can see employee has an address and the address has the employee as owner. If the property `id` is not present in the object then it is going to take the `hashcode` value from the object as reference. And finally, the `depth` parameter passed to serialize function tells serializer how deep you want to go throw the reference. This help us not only to avoid cyclical reference, but to determine what referenced objects should be serialized.
 
+The same applies for lists:
+
+
+```dart
+
+    library example;
+
+    import 'package:dson/dson.dart';
+    
+    @MirrorsUsed(targets:const['example'],override:'*')
+    import 'dart:mirrors';
+    
+    @cyclical
+    class Student {
+      int id;
+      String name;
+      
+      List<Course> courses;
+    }
+    
+    @cyclical
+    class Course {
+      int id;
+      
+      DateTime beginDate;
+      
+      List<Student> students;
+    }
+    
+    void main() {
+    
+      print(serialize(student1)); // will print: '{"id":1,"name":"student1","courses":[{"id":1},{"id":3}]}'
+    
+      print(serialize(student1, depth: ['courses']));
+      /* will print:
+          '{'
+            '"id":1,'
+            '"name":"student1",'
+            '"courses":['
+              '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":[{"id":1},{"id":2}]},'
+              '{"id":3,"beginDate":"2015-01-03T00:00:00.000Z","students":[{"id":1},{"id":3}]}'
+            ']'
+          '}');
+       */
+    
+      print(serialize(student1.courses)); 
+      /* will print:
+          '['
+            '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":[{"id":1},{"id":2}]},'
+            '{"id":3,"beginDate":"2015-01-03T00:00:00.000Z","students":[{"id":1},{"id":3}]}'
+          ']');
+      */
+      
+      print(serialize(student2.courses, depth: ['students']));
+      /* will print: 
+          '['
+            '{"id":1,"beginDate":"2015-01-01T00:00:00.000Z","students":['
+              '{"id":1,"name":"student1","courses":[{"id":1},{"id":3}]},'
+              '{"id":2,"name":"student2","courses":[{"id":1},{"id":2}]}'
+            ']},'
+            '{"id":2,"beginDate":"2015-01-02T00:00:00.000Z","students":['
+              '{"id":2,"name":"student2","courses":[{"id":1},{"id":2}]},'
+              '{"id":3,"name":"student3","courses":[{"id":2},{"id":3}]}'
+            ']}'
+          ']'
+       */
+   }
+```
+    
 Without the annotation `@cyclical` the program is going to throw a stack overflow error caused by the serializing of the cyclical objects.
 
 ## Parsing json to dart object

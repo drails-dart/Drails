@@ -11,11 +11,11 @@ bool isSuperPrimitive(var value) => isPrimitive(value) || value is DateTime || v
 /**
  * Serializes the [object] to a JSON string.
  */
-String serialize(Object object, {bool parseString: false, var depth}) {
+String serialize(object, {bool parseString: false, var depth}) {
   _serLog.fine("Start serializing");
 
   if (object is String && !parseString) return object;
-
+  
   var result = JSON.encode(objectToSerializable(object, depth: depth));
 
   _serializedStack.clear();
@@ -23,7 +23,7 @@ String serialize(Object object, {bool parseString: false, var depth}) {
   return result;
 }
 
-Object objectToSerializable(Object obj, {var depth, String fieldName}) {
+Object objectToSerializable(obj, {var depth, String fieldName}) {
   if (isPrimitive(obj)) {
     _serLog.fine("Found primetive: $obj");
     return obj;
@@ -32,21 +32,21 @@ Object objectToSerializable(Object obj, {var depth, String fieldName}) {
     return obj.toIso8601String();
   } else if (obj is List) {
     _serLog.fine("Found list: $obj");
-    return _serializeList(obj);
+    return _serializeList(obj, depth, fieldName);
   } else if (obj is Map) {
     _serLog.fine("Found map: $obj");
     return _serializeMap(obj);
   } else {
     _serLog.fine("Found object: $obj");
-    return _serializeObject(obj, depth);
+    return _serializeObject(obj, depth, fieldName);
   }
 }
 
-List _serializeList(List list) {
+List _serializeList(List list, depth, String fieldName) {
   List newList = [];
 
   list.forEach((item) {
-    newList.add(objectToSerializable(item));
+    newList.add(objectToSerializable(item, depth: depth, fieldName: fieldName));
   });
 
   return newList;
@@ -66,7 +66,7 @@ Map _serializeMap(Map map) {
 /**
  * Runs through the Object keys by using a ClassMirror.
  */
-Object _serializeObject(Object obj, var depth) {
+Object _serializeObject(var obj, var depth, String fieldName) {
   InstanceMirror instMirror = reflect(obj);
   ClassMirror classMirror = instMirror.type;
   _serLog.fine("Serializing class: ${_getName(classMirror.qualifiedName)}");
@@ -74,15 +74,33 @@ Object _serializeObject(Object obj, var depth) {
   Map result = new Map<String, dynamic>();
 
   if (_serializedStack[obj] == null) {
-    getPublicVariablesFromClass(classMirror).forEach((sym, decl) {
-      _pushField(sym, decl, instMirror, result, depth);
-    });
-    
-    if (getPublicVariablesFromClass(classMirror)[#id] == null && _isCiclical(obj, instMirror)) {
-      result['hashcode'] = obj.hashCode;
+
+    if(fieldName != null) {
+      if (depth is List) {
+        depth = depth.firstWhere((e) => //
+        e == fieldName || e is Map && e.keys.contains(fieldName), orElse: () => null);
+      }
+  
+      if (depth is Map) depth = depth[fieldName];
     }
 
-    _serializedStack[obj] = result;
+    var publicVariables = getPublicVariablesFromClass(classMirror);
+    if (depth != null || !_isCiclical(obj, instMirror) || fieldName == null) {
+      publicVariables.forEach((sym, decl) {
+        _pushField(sym, decl, instMirror, result, depth);
+      });
+
+      _serializedStack[obj] = result;
+    }
+    
+    if (_isCiclical(obj, instMirror)) {
+      if (publicVariables[#id] == null) {
+        result['hashcode'] = obj.hashCode;
+      } else {
+        result['id'] = obj.id;
+      }
+    }
+
   } else {
     result = _serializedStack[obj];
   }
@@ -98,7 +116,7 @@ Object _serializeObject(Object obj, var depth) {
  */
 void _pushField(Symbol symbol, DeclarationMirror variable, InstanceMirror instMirror, Map<String, dynamic> result, var depth) {
 
-  String fieldName = MirrorSystem.getName(symbol);
+  String fieldName = _getName(symbol);
   if (fieldName.isEmpty) return;
 
   InstanceMirror field = instMirror.getField(symbol);
@@ -114,12 +132,6 @@ void _pushField(Symbol symbol, DeclarationMirror variable, InstanceMirror instMi
     fieldName = prop.name;
   }
 
-  if (depth is List) {
-    depth = depth.firstWhere((e) => //
-    e == fieldName || e is Map && e.keys.contains(fieldName), orElse: () => null);
-  }
-
-  if (depth is Map) depth = depth[fieldName];
 
   _serLog.finer("depth: $depth");
 
@@ -128,26 +140,7 @@ void _pushField(Symbol symbol, DeclarationMirror variable, InstanceMirror instMi
 
     _serLog.finer("Serializing field: ${fieldName}");
 
-//    bool isNotCiclical = isSuperPrimitive(value) || !new IsAnnotation<Ciclical>().onInstance(field);
-    if (depth != null || !_isCiclical(value, field)) {
-      result[fieldName] = objectToSerializable(value, depth: depth is List || depth is Map ? depth : null);
-//      if (getPublicVariablesFromClass(field.type)[#id] == null && !isNotCiclical) {
-//        result[fieldName]['hashcode'] = field.reflectee.hashCode;
-//      }
-    } else {
-      if (getPublicVariablesFromClass(field.type)[#id] != null) {
-        var _aux;
-        result[fieldName] = {
-          //TODO REPLACE FOR: 'id': field.getField(#id).reflectee ?? -field.reflectee.hashCode
-          'id': (_aux = field.getField(#id).reflectee) != null ? _aux : -field.reflectee.hashCode
-        };
-      } else {
-        result[fieldName] = {
-          'hashcode': field.reflectee.hashCode
-        };
-      }
-
-    }
+    result[fieldName] = objectToSerializable(value, depth: depth is List || depth is Map ? depth : null, fieldName: fieldName);
   }
 }
 
