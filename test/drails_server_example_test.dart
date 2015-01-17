@@ -1,4 +1,4 @@
-import '../bin/server.dart' as drails_example;
+import 'example_test/server.dart' as drails_example;
 import 'package:unittest/unittest.dart';
 import 'package:http/http.dart';
 import 'package:drails/drails.dart';
