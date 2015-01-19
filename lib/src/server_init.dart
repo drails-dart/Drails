@@ -251,6 +251,7 @@ void _writeResponse(result, bool removeBrackets, HttpRequest request) {
     result = result.substring(1, result.length - 1);
   }
   request.response
+      ..headers.contentType = new ContentType("application", "json", charset: "utf-8")
       ..write(result)
       ..close();
 }
