@@ -218,11 +218,15 @@ void _invokeControllerMethod(
   
   var user = request.session['user'],
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(instanceMirror),
-      authorizedForController = (_ref1 == null) ? true : (user == null) ? false : _ref1.isAuthorized(user, _ref1),
+      authorizedForController = (_ref1 != null && user != null) ?
+          _ref1.isAuthorized(user, _ref1) 
+          : false
       _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror),
-      authorizedForMethod = (_ref2 == null) ? true : (user == null) ? false : _ref2.isAuthorized(user, _ref2);
+      authorizedForMethod = (_ref2 != null && user != null) ?
+          _ref2.isAuthorized(user, _ref2) 
+          : false;
   
-  if(authorizedForController && authorizedForMethod) {
+  if(_ref1 == null && _ref2 == null || authorizedForController || authorizedForMethod) {
     var result;
     if(instanceMirror is ClosureMirror) {
       result = instanceMirror.apply(positionalArgs, namedArgs).reflectee;
