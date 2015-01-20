@@ -220,7 +220,7 @@ void _invokeControllerMethod(
       _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(instanceMirror),
       authorizedForController = (_ref1 != null && user != null) ?
           _ref1.isAuthorized(user, _ref1) 
-          : false
+          : false,
       _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror),
       authorizedForMethod = (_ref2 != null && user != null) ?
           _ref2.isAuthorized(user, _ref2) 
