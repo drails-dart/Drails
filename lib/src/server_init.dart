@@ -2,11 +2,13 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
+String ENV = 'dev';
+
 /// Instance of the current running server, useful to stop the server.
 HttpServer DRAILS_SERVER;
 
 /// Specifies the URI used to get the main html file
-String CLIENT_URL = 'client.html';
+String CLIENT_URL = 'index.html';
 
 /// Map that mantains the list of URI that could be used to serve files
 Map<String, String> CLIENT_DIR = {
@@ -14,13 +16,17 @@ Map<String, String> CLIENT_DIR = {
   'prod': '/../../client/build/'
 };
 
+Map<String, bool> ENABLE_CORS = {
+  'dev': true,
+  'prod': false
+};
 ///Maps Used to define fast request functions
 Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 
 /**
  * Initialize the server with the given arguments
  */
-void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040, String initMode: 'dev'}) {
+void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040}) {
   address = address != null ? address : InternetAddress.LOOPBACK_IP_V4;
   _serverInitLog.fine('address: $address, port: $port');
   
@@ -33,7 +39,7 @@ void initServer(List<Symbol> includedLibs, {InternetAddress address , int port :
     
     var router = new Router(server);
     
-    _initFileServer(router, initMode);
+    _initFileServer(router);
 
     _initProxyServer(router);
     
@@ -41,8 +47,8 @@ void initServer(List<Symbol> includedLibs, {InternetAddress address , int port :
   });
 }
 
-void _initFileServer(Router router, String initMode) {
-    var clientFiles = dirname(Platform.script.toFilePath()) + CLIENT_DIR[initMode];
+void _initFileServer(Router router) {
+    var clientFiles = dirname(Platform.script.toFilePath()) + CLIENT_DIR[ENV];
     
     _serverInitLog.info('clientFiles: $clientFiles');
     
@@ -94,7 +100,10 @@ void _mapControllers(Object controller, Router router) {
       controllerCm = controllerIm.type,
       controllerName = MirrorSystem.getName(controllerCm.simpleName).replaceFirst('Controller', '').toLowerCase(),
       controllerMms = getPublicMethodsFromClass(controllerCm);
-  
+
+  router.serve(new UrlPattern("/$controllerName(/(\\w+))?"), method: 'OPTIONS').listen((request) {
+    _writeResponse("", false, request);
+  });
   controllerMms.forEach((symbol, MethodMirror controllerMm) {
     var controllerMethodName = MirrorSystem.getName(controllerMm.simpleName);
 
@@ -253,6 +262,12 @@ void _writeResponse(result, bool removeBrackets, HttpRequest request) {
   result = result == null ? "" : serialize(result);
   if(removeBrackets) {
     result = result.substring(1, result.length - 1);
+  }
+  if(ENABLE_CORS[ENV]) {
+    request.response.headers
+      ..add("Access-Control-Allow-Origin", "*, ")
+      ..add("Access-Control-Allow-Methods", "PUT, DELETE, POST, GET, OPTIONS")
+      ..add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   }
   request.response
       ..headers.contentType = new ContentType("application", "json", charset: "utf-8")
