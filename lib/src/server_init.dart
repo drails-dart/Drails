@@ -39,7 +39,11 @@ void initServer(List<Symbol> includedLibs, {InternetAddress address , int port :
     
     var router = new Router(server);
     
-    _initFileServer(router);
+    try {
+      _initFileServer(router);
+    } catch (e) {
+      print(e);
+    }
 
     _initProxyServer(router);
     
