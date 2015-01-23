@@ -1,5 +1,7 @@
 #Drails
 
+[![Build Status](https://drone.io/github.com/luisvt/Drails/status.png)](https://drone.io/github.com/luisvt/Drails/latest)
+
 DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
 To get a sample application that uses Drails go to:
