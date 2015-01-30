@@ -1,7 +1,7 @@
 name: drails
 version: 0.1.2
 author: Luis Vargas <luisvargastijerino@gmail.com>
-description: DART MVC Framework based on Grails and Rails
+description: DART MVC Framework inspired on Grails and Rails
 homepage: https://github.com/luisvt/Drails
 environment:
   sdk: '>=1.6.0'
