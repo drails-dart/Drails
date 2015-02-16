@@ -6,7 +6,7 @@ DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
 To get a sample application that uses Drails go to:
 
-https://github.com/luisvt/drails_example
+https://github.com/luisvt/drails_sample_app
 
 ##Setup the Server
 To setup a server you just need to call the method `initServer` and pass the list of libraries that are going to be taken in count when bootstrapping the application context, for example:

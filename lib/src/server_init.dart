@@ -12,8 +12,8 @@ String CLIENT_URL = 'index.html';
 
 /// Map that mantains the list of URI that could be used to serve files
 Map<String, String> CLIENT_DIR = {
-  'dev': '/../../client/web/',
-  'prod': '/../../client/build/'
+  'dev': '/../web/',
+  'prod': '/../build/web/'
 };
 
 Map<String, bool> ENABLE_CORS = {
@@ -26,15 +26,16 @@ Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 /**
  * Initialize the server with the given arguments
  */
-void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040}) {
-  address = address != null ? address : InternetAddress.LOOPBACK_IP_V4;
+void initServer(List<Symbol> includedLibs, {String address , int port : 4040}) {
+  address = address != null ? address : '0.0.0.0';
   _serverInitLog.fine('address: $address, port: $port');
   
   ApplicationContext.bootstrap(includedLibs);
 
   var controllers = ApplicationContext.controllers;
   
-  HttpServer.bind(address, port).then((server) {
+  var envPort = Platform.environment['PORT'];
+  HttpServer.bind(address, envPort != null ? envPort : port).then((server) {
     DRAILS_SERVER = server;
     
     var router = new Router(server);
