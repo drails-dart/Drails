@@ -40,7 +40,7 @@ void initServer(List<Symbol> includedLibs, {address , int port : 4040}) {
   
   _serverInitLog.fine('address: $address, port: $port');
   
-  HttpServer.bind(address, envPort != null ? envPort : port).then((server) {
+  HttpServer.bind(address, port).then((server) {
     DRAILS_SERVER = server;
     
     var router = new Router(server);
