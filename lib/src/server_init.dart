@@ -26,15 +26,20 @@ Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 /**
  * Initialize the server with the given arguments
  */
-void initServer(List<Symbol> includedLibs, {InternetAddress address , int port : 4040}) {
-  address = address != null ? address : new InternetAddress('0.0.0.0');
-  _serverInitLog.fine('address: $address, port: $port');
+void initServer(List<Symbol> includedLibs, {address , int port : 4040}) {
+  address = address != null ? address : '0.0.0.0';
   
   ApplicationContext.bootstrap(includedLibs);
 
   var controllers = ApplicationContext.controllers;
   
+  //Get port from enviroment if server is on heroku
   var envPort = Platform.environment['PORT'];
+  
+  if(envPort != null) port = int.parse(envPort);
+  
+  _serverInitLog.fine('address: $address, port: $port');
+  
   HttpServer.bind(address, envPort != null ? envPort : port).then((server) {
     DRAILS_SERVER = server;
     
