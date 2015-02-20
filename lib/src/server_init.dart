@@ -26,8 +26,8 @@ Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 /**
  * Initialize the server with the given arguments
  */
-void initServer(List<Symbol> includedLibs, {String address , int port : 4040}) {
-  address = address != null ? address : '0.0.0.0';
+void initServer(List<Symbol> includedLibs, {address , int port : 4040}) {
+  address = address != null ? address : new InternetAddress('0.0.0.0');
   _serverInitLog.fine('address: $address, port: $port');
   
   ApplicationContext.bootstrap(includedLibs);
