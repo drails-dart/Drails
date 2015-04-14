@@ -55,9 +55,7 @@ in that way whenever a controller has a variable of Type SomeService and is anno
 
 If you have a third level class that implements or extends SomeService this class is going to be used doubt to the level.
 
-```
-NOTE: Since Dart has support for Global Variables and Methods, I think that we don't need to add support for annotations @Component, @Value, or @Bean that are used on Spring MVC.
-```
+> Since Dart has support for Global Variables and Methods, I think that we don't need to add support for annotations @Component, @Value, or @Bean that are used on Spring MVC.
 
 ##Create Controllers
 To create a controller you only need to append 'Controller' to the class name, for example:
