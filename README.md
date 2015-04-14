@@ -197,7 +197,7 @@ class EmployeesController {
 }
 ```
 
-Since annotations `@AuthorizeRoles` and `@DenyRoles` implements `@AuthorizeIf` they are taking in count when authorization checker is run.
+Since annotations `@AuthorizeRoles` and `@DenyRoles` implements `@AuthorizeIf` they are taken into account when authorization checker is run.
 
 The only thing that you need to do before is to be sure that you save into `request.session['user']` an object that has a `roles` getter. For example:
 
@@ -240,12 +240,9 @@ and creating your own implementation. Furthermore, you can also create a better 
 
 ##TODOs
 
-* Create Dependency Injection Tests
 * Create Generic Rest Controller which should be extended for other controllers
 * Add Object Relational Mapping (ORM) or Domain Object Model (DOM) support
 * Create Repositories or Store objects to connect to database
 * Add Exceptions Handlers
-* Add Angular Dart or Polymer Dart client side
-* Handle Cyclic Reference parsing
-* Handle hashcode, _ref or @id variable to deserialize objects that don't have ids (for inserting purposes).
+* Add Interceptors
  
