@@ -5,6 +5,7 @@ import 'package:drails_di/drails_di.dart';
 import 'package:logging/logging.dart';
 import 'dart:io';
 import 'dart:async';
+import 'package:dson/dson.dart';
 
 part 'controllers/persons_controller.dart';
 part 'controllers/authorization_sample_controller.dart';
@@ -14,7 +15,7 @@ part 'models/employee.dart';
 
 
 initLogging() {
-  Logger.root.level = Level.OFF;
+  Logger.root.level = Level.ALL;
   hierarchicalLoggingEnabled = true;
   new Logger('server_init').level = Level.INFO;
   
@@ -23,18 +24,21 @@ initLogging() {
   });
 }
 
+@component
+@post
+login(HttpSession session, @RequestBody User user) {
+  var currentUser = users.values.singleWhere((u) => u.name == user.name && u.password == user.password);
+  if(currentUser == null) throw Exception;
+  session['user'] = currentUser;
+}
+
 void main() {
   initLogging();
   
-  POST['/login'] = (HttpSession session, @RequestBody User user) {
-    var currentUser = users.values.singleWhere((u) => u.name == user.name && u.password == user.password);
-    if(currentUser == null) throw Exception;
-    session['user'] = currentUser; 
-  };
-  
-  initServer([#drails_example]);
+  initServer(['drails_example']);
 }
 
+@component
 class HelloController extends HiController {
   String someString;
   
@@ -53,29 +57,35 @@ class HelloController extends HiController {
   
 }
 
+@component
 class HiController {
   String index() => "hi";
   
   String get2() => 'get';
 }
 
+@component
 abstract class HelloService {
   String sayHello() => 'hello from Hello service abstract class';
 }
 
+@component
 class HelloServiceImpl extends HelloService {
   String sayHello() => super.sayHello();
 }
 
+@component
 class HelloServiceImpl2 extends HelloServiceImpl {
   
 }
 
+@component
 abstract class SomeService {
   String someMethod();
 }
 
 
+@component
 class SomeServiceImpl implements SomeService {
   String someMethod() => 'someMethod';
 }

@@ -1,5 +1,6 @@
 part of drails_example;
 
+@serializable
 class User {
   int id;
   String name;

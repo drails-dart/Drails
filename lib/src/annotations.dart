@@ -27,8 +27,18 @@ class RequestParam {
  * Annotation that indicates that the controller method should be mapped to a 
  * POST request
  */
-const Post = const _Post();
+const post = const Post();
 
-class _Post {
-  const _Post();
+class Post extends _Path{
+  const Post([String url]) : super(url);
+}
+
+class Get extends _Path {
+  const Get(String url) : super(url);
+}
+
+class _Path {
+  const _Path([this.url]);
+
+  final String url;
 }

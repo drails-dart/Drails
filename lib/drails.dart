@@ -1,6 +1,5 @@
 library drails;
 
-import 'dart:mirrors';
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -13,6 +12,7 @@ import 'package:path/path.dart';
 import 'package:drails_di/drails_di.dart';
 import 'package:drails_commons/drails_commons.dart';
 import 'package:dson/dson.dart';
+import 'package:reflectable/reflectable.dart';
 
 part 'src/server_init.dart';
 part 'src/annotations.dart';

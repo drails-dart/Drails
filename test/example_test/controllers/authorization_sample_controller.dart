@@ -18,6 +18,7 @@ bool hasRolePublicOrAdmin(user, AuthorizeIf me) =>
         ['PUBLIC', 'ADMIN'].any((v) => 
             v == role));
 
+@component
 @AuthorizeIf(hasRolePublicOrAdmin) //You can use next annotation as shorthand
 //@AuthorizeRoles(const ['PUBLIC', 'ADMIN'])
 class EmployeesController {

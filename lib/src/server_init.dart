@@ -20,13 +20,9 @@ Map<String, bool> ENABLE_CORS = {
   'dev': true,
   'prod': false
 };
-///Maps Used to define fast request functions
-Map<String, Function> GET = {}, POST = {}, PUT = {}, DELETE = {};
 
-/**
- * Initialize the server with the given arguments
- */
-void initServer(List<Symbol> includedLibs, {address , int port : 4040}) {
+/// Initialize the server with the given arguments
+void initServer(List<String> includedLibs, {address , int port : 4040}) {
   address = address != null ? address : '0.0.0.0';
   
   ApplicationContext.bootstrap(includedLibs);
@@ -94,28 +90,30 @@ void _initFileServer(Router router) {
 
 void _initProxyServer(Router router) {
 
-    <String, Map<String, Function>>{'GET': GET, 'POST': POST, 'PUT': PUT, 'DELETE': DELETE}.forEach((method, methodsMap) {
-      methodsMap.forEach((url, function) {
-        _serverInitLog.info('method: $method, url: $url');
-        router.serve(new UrlPattern(url), method: method).listen((request) {
-          ClosureMirror closureMirror = reflect(function);
-          _process(request, closureMirror, closureMirror.function);
-        });
-      });
+  ApplicationContext.proxyFunctions.forEach((gfmm, lm) {
+    _Path _path = new GetValueOfAnnotation<_Path>().fromDeclaration(gfmm);
+    String method = _path == null || _path is Get ? "GET" : "POST";
+
+    String url = _path == null || _path.url == null ? gfmm.simpleName : _path.url;
+
+    _serverInitLog.info('method: $method, url: $url');
+    router.serve(new UrlPattern('/$url'), method: method).listen((request) {
+      _process(request, lm, gfmm);
     });
+  });
 }
 
 void _mapControllers(Object controller, Router router) {
-  var controllerIm = reflect(controller),
+  var controllerIm = component.reflect(controller),
       controllerCm = controllerIm.type,
-      controllerName = MirrorSystem.getName(controllerCm.simpleName).replaceFirst('Controller', '').toLowerCase(),
-      controllerMms = getPublicMethodsFromClass(controllerCm);
+      controllerName = controllerCm.simpleName.replaceFirst('Controller', '').toLowerCase(),
+      controllerMms = getPublicMethodsFromClass(controllerCm, component);
 
   router.serve(new UrlPattern("/$controllerName(/(\\w+))?"), method: 'OPTIONS').listen((request) {
     _writeResponse("", false, request);
   });
   controllerMms.forEach((symbol, MethodMirror controllerMm) {
-    var controllerMethodName = MirrorSystem.getName(controllerMm.simpleName);
+    var controllerMethodName = controllerMm.simpleName;
 
     var urlPath = '/$controllerName',
         method = 'GET',
@@ -144,13 +142,13 @@ void _mapControllers(Object controller, Router router) {
       default:
         urlPath += '/$controllerMethodName';
         pathParamBegin = 2;
-        if(new IsAnnotation<_Post>().onDeclaration(controllerMm)) {
+        if(new IsAnnotation<Post>().onDeclaration(controllerMm)) {
           method = 'POST';
         }
         controllerMm.parameters.forEach((param) {
           if(!new IsAnnotation<_RequestBody>().onDeclaration(param)
-              && param.type != reflectClass(HttpRequest)
-              && param.type != reflectClass(HttpSession))
+              && param.type.simpleName != 'HttpRequest'
+              && param.type.simpleName != 'HttpSession')
           urlPath += wordPath;
         });
     }
@@ -163,7 +161,7 @@ void _mapControllers(Object controller, Router router) {
   });
 }
 
-void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror methodMirror, [int pathParamBegin = 1]) {
+void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [int pathParamBegin = 1]) {
   var pathSegments = request.uri.pathSegments,
       positionalArgs = [], 
       namedArgs = {},
@@ -176,17 +174,17 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
   UTF8.decodeStream(request).then((data) {
     try {
       methodMirror.parameters.forEach((parameter) {
-        if (parameter.type == reflectClass(HttpRequest)) {
+        if (parameter.type.simpleName == 'HttpRequest') {
           positionalArgs.add(request);
-        } else if (parameter.type == reflectClass(HttpHeaders)) {
+        } else if (parameter.type.simpleName == 'HttpHeaders') {
           positionalArgs.add(request.headers);
-        } else if (parameter.type == reflectClass(HttpSession)) {
+        } else if (parameter.type.simpleName == 'HttpSession') {
           positionalArgs.add(request.session);
         } else if( (parameter.isNamed || new IsAnnotation<RequestParam>().onDeclaration(parameter))
-            && (_ref = request.uri.queryParameters[MirrorSystem.getName(parameter.simpleName)]) != null) {
+            && (_ref = request.uri.queryParameters[parameter.simpleName]) != null) {
           namedArgs[parameter.simpleName] = _ref;
         } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) && data.isNotEmpty) {
-          if(parameter.type.qualifiedName == QN_LIST) {
+          if(parameter.type.simpleName == SN_LIST) {
             if(!(data as String).startsWith('[')) {
               data = '[$data]';
               removeBrackets = true;
@@ -196,11 +194,11 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
             positionalArgs.add(deserialize(data, parameter.type.reflectedType));
           }
         } else if(pathVariables.length >= i + 1 ) {
-          if (parameter.type == reflectClass(int)) {
+          if (parameter.type.simpleName == SN_INT) {
             positionalArgs.add(int.parse(pathVariables.elementAt(i++)));
-          } else if (parameter.type == reflectClass(String)) {
+          } else if (parameter.type.simpleName == SN_STRING) {
             positionalArgs.add(pathVariables.elementAt(i++));
-          } else if (parameter.type == reflectClass(DateTime)) {
+          } else if (parameter.type.simpleName == SN_DATETIME) {
             positionalArgs.add(DateTime.parse(pathVariables.elementAt(i++)));
           } else {_serverInitLog.fine('parameter.type.reflectedType: ${parameter.type.reflectedType}');
             positionalArgs.add(deserialize(pathVariables.elementAt(i++), parameter.type.reflectedType));
@@ -212,14 +210,15 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
           'invoking controller:'
           '\n\tpathSegments: $pathSegments'
           '\n\tpathVariables: $pathVariables'
-          '\n\tcontrollerIm: $instanceMirror'
+          '\n\tcontrollerIm: $mirror'
           '\n\tcontrollerMm: $methodMirror'
           '\n\tpositionalArgs: $positionalArgs'
           '\n\tnamedArgs: $namedArgs');
       
-      _invokeControllerMethod(instanceMirror, methodMirror, positionalArgs, namedArgs, request, removeBrackets);
-    } catch (e) {
+      _invokeControllerMethod(mirror, methodMirror, positionalArgs, namedArgs, request, removeBrackets);
+    } catch (e, s) {
       print(e);
+      print(s);
       request.response
         ..statusCode = 400
         ..close();
@@ -228,31 +227,29 @@ void _process(HttpRequest request, InstanceMirror instanceMirror, MethodMirror m
 }
 
 void _invokeControllerMethod(
-  InstanceMirror instanceMirror, 
+  Mirror mirror,
   MethodMirror methodMirror,
   List positionalArgs,
   Map<Symbol, dynamic> namedArgs,
   HttpRequest request,
   bool removeBrackets) {
-  
-  var user = request.session['user'],
-      _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(instanceMirror),
-      authorizedForController = (_ref1 != null && user != null) ?
-          _ref1.isAuthorized(user, _ref1) 
-          : false,
-      _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror),
-      authorizedForMethod = (_ref2 != null && user != null) ?
-          _ref2.isAuthorized(user, _ref2) 
-          : false;
+  var user = request.session['user'], _ref1, _ref2, authorizedForController = true, authorizedForMethod = true;
+  if(mirror is InstanceMirror) {
+    _ref1 = new GetValueOfAnnotation<AuthorizeIf>().fromInstance(mirror);
+    authorizedForController = (_ref1 != null && user != null) ?
+      _ref1.isAuthorized(user, _ref1)
+      : false;
+    _ref2 = new GetValueOfAnnotation<AuthorizeIf>().fromDeclaration(methodMirror);
+    authorizedForMethod = (_ref2 != null && user != null) ?
+      _ref2.isAuthorized(user, _ref2)
+      : false;
+  }
+
   
   if(_ref1 == null && _ref2 == null || authorizedForController || authorizedForMethod) {
-    var result;
-    if(instanceMirror is ClosureMirror) {
-      result = instanceMirror.apply(positionalArgs, namedArgs).reflectee;
-    } else {
-      result = instanceMirror.invoke(methodMirror.simpleName, positionalArgs, namedArgs).reflectee;
-    }
-    
+
+    var result = mirror.invoke(methodMirror.simpleName, positionalArgs, namedArgs);
+
     if(result is Future) {
       result.then((value) => 
           _writeResponse(value, removeBrackets, request));
@@ -261,7 +258,7 @@ void _invokeControllerMethod(
     }
     
   } else {
-    //TODO: convert this to a trhow NotAuthorizedException
+    //TODO: convert this to a throw NotAuthorizedException
     request.response
       ..statusCode = 401
       ..close();

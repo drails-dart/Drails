@@ -1,5 +1,6 @@
 part of drails_example;
 
+@component
 class PersonsController {
   static int lastId = 3;
   Map<int, Person> persons = {
@@ -39,6 +40,7 @@ class PersonsController {
   void deleteAll(@RequestBody List<int> ids) { ids.forEach((id) => persons.remove(id)); }
 }
 
+@serializable
 class Person {
   int id;
   String firstName;
