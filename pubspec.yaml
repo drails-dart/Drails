@@ -6,12 +6,14 @@ homepage: https://github.com/luisvt/Drails
 environment:
   sdk: '>=1.6.0'
 dependencies:
-  drails_di: #'^0.0.5'
-    path: ../drails_di
-  dson: #'^0.1.7'
-    path: ../dson
-  http: '>=0.11.1+1 <0.12.0'
+  drails_di: '^0.0.6'
+#  drails_di:
+#    path: ../drails_di
+  dson: '^0.1.7'
+#  dson:
+#    path: ../dson
+  http: '>=0.11.1+1 <0.11.1+3'
   http_server: '>=0.9.3 <0.10.0'
   route: '>=0.4.6 <0.5.0'
 dev_dependencies:
-  unittest: '^0.11.0'
+  test: '^0.12.0'

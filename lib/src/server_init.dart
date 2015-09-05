@@ -2,25 +2,6 @@ part of drails;
 
 final _serverInitLog = new Logger('server_init');
 
-String ENV = 'dev';
-
-/// Instance of the current running server, useful to stop the server.
-HttpServer DRAILS_SERVER;
-
-/// Specifies the URI used to get the main html file
-String CLIENT_URL = 'index.html';
-
-/// Map that mantains the list of URI that could be used to serve files
-Map<String, String> CLIENT_DIR = {
-  'dev': '/../web/',
-  'prod': '/../build/web/'
-};
-
-Map<String, bool> ENABLE_CORS = {
-  'dev': true,
-  'prod': false
-};
-
 /// Initialize the server with the given arguments
 void initServer(List<String> includedLibs, {address , int port : 4040}) {
   address = address != null ? address : '0.0.0.0';
@@ -91,7 +72,7 @@ void _initFileServer(Router router) {
 void _initProxyServer(Router router) {
 
   ApplicationContext.proxyFunctions.forEach((gfmm, lm) {
-    _Path _path = new GetValueOfAnnotation<_Path>().fromDeclaration(gfmm);
+    Path _path = new GetValueOfAnnotation<Path>().fromDeclaration(gfmm);
     String method = _path == null || _path is Get ? "GET" : "POST";
 
     String url = _path == null || _path.url == null ? gfmm.simpleName : _path.url;
@@ -112,6 +93,7 @@ void _mapControllers(Object controller, Router router) {
   router.serve(new UrlPattern("/$controllerName(/(\\w+))?"), method: 'OPTIONS').listen((request) {
     _writeResponse("", false, request);
   });
+
   controllerMms.forEach((symbol, MethodMirror controllerMm) {
     var controllerMethodName = controllerMm.simpleName;
 
@@ -216,9 +198,13 @@ void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [in
           '\n\tnamedArgs: $namedArgs');
       
       _invokeControllerMethod(mirror, methodMirror, positionalArgs, namedArgs, request, removeBrackets);
+    } on NoAuthorizedError {
+      request.response
+        ..statusCode = 401
+        ..close();
     } catch (e, s) {
-      print(e);
-      print(s);
+      _serverInitLog.fine(e);
+      _serverInitLog.fine(s);
       request.response
         ..statusCode = 400
         ..close();
@@ -258,10 +244,7 @@ void _invokeControllerMethod(
     }
     
   } else {
-    //TODO: convert this to a throw NotAuthorizedException
-    request.response
-      ..statusCode = 401
-      ..close();
+    throw new NoAuthorizedError();
   }
 }
 
@@ -281,3 +264,10 @@ void _writeResponse(result, bool removeBrackets, HttpRequest request) {
       ..write(result)
       ..close();
 }
+
+@component
+abstract class _HttpSessionComponent extends HttpSession {}
+@component
+abstract class _HttpHeadersComponent extends HttpHeaders {}
+@component
+abstract class _HttpRequestComponent extends HttpRequest {}

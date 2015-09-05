@@ -1,4 +1,9 @@
-part of drails_example;
+import 'package:dson/dson.dart';
+
+@serializable
+class Employee extends User {
+  num salary;
+}
 
 @serializable
 class User {

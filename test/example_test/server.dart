@@ -6,18 +6,17 @@ import 'package:logging/logging.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:dson/dson.dart';
+import 'models.dart';
 
 part 'controllers/persons_controller.dart';
 part 'controllers/authorization_sample_controller.dart';
 part 'controllers/async_employee_controller.dart';
-part 'models/user.dart';
-part 'models/employee.dart';
 
 
 initLogging() {
-  Logger.root.level = Level.ALL;
+  Logger.root.level = Level.INFO;
   hierarchicalLoggingEnabled = true;
-  new Logger('server_init').level = Level.INFO;
+  new Logger('server_init').level = Level.ALL;
   
   Logger.root.onRecord.listen((LogRecord rec) {
     print('${rec.level.name}: ${rec.time}: ${rec.message}');
@@ -25,10 +24,17 @@ initLogging() {
 }
 
 @component
-@post
+@POST
 login(HttpSession session, @RequestBody User user) {
-  var currentUser = users.values.singleWhere((u) => u.name == user.name && u.password == user.password);
-  if(currentUser == null) throw Exception;
+  var currentUser;
+  try {
+    currentUser = users.values
+        .singleWhere((u) =>
+            u.name == user.name
+                && u.password == user.password);
+  } catch (e, s) {
+    throw new NoAuthorizedError();
+  }
   session['user'] = currentUser;
 }
 
@@ -89,3 +95,6 @@ abstract class SomeService {
 class SomeServiceImpl implements SomeService {
   String someMethod() => 'someMethod';
 }
+
+@component
+abstract class UserComp extends User {}

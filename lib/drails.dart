@@ -16,6 +16,8 @@ import 'package:reflectable/reflectable.dart';
 
 part 'src/server_init.dart';
 part 'src/annotations.dart';
+part 'src/config.dart';
 
 //Security
 part 'src/security/annotations.dart';
+part 'src/security/exceptions.dart';
