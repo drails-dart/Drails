@@ -1,6 +1,6 @@
 # Drails
 
-[![Build Status](https://drone.io/github.com/luisvt/Drails/status.png)](https://drone.io/github.com/luisvt/Drails/latest)
+![Build Status](https://travis-ci.org/drails-dart/Drails.svg?branch=master)
 
 DART MVC Framework inspired on Groovy on Grails and Ruby on Rails.
 
