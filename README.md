@@ -1,4 +1,4 @@
-#Drails
+# Drails
 
 [![Build Status](https://drone.io/github.com/luisvt/Drails/status.png)](https://drone.io/github.com/luisvt/Drails/latest)
 
@@ -8,7 +8,52 @@ To get a sample application that uses Drails go to:
 
 https://github.com/luisvt/drails_sample_app
 
-##Setup the Server
+## Getting Started
+
+1. Create a new console application with next structure:
+
+```
+- sample_drails_server
+  ...
+  * pubspec.yaml
+  - bin
+    * main.dart
+  ...
+```
+
+2. Inside `pubspec.yaml` add dependencies to drails, the code should look like this:
+
+```yaml
+name: drails_sample_server
+version: 0.0.1
+description: A minimal drails server application.
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  drails: ^0.1.4
+  ...
+```
+
+3. Inside `main.dart` add next code:
+
+```dart
+library drails_sample_server;
+//... other parts and imports omitted ...
+
+@injectable
+class HelloController {
+    String get() => "Hello from Drails server!";
+}
+
+main() {
+  initServer([#drails_sample_server]); //Initialize a server that listen on localhost:4040
+}
+```
+
+4. Start the server by running `main.dart` and navigate to `localhost:4040/hello` in your browser
+
+## Setup the Server
+
 To setup a server you just need to call the method `initServer` and pass the list of libraries that are going to be taken in count when bootstrapping the application context, for example:
 
 ```dart
@@ -34,10 +79,12 @@ If you want to stop the server for any reason, for example after finishing all t
 DRAILS_SERVER.close();
 ```
 
-##Dependency Injection
+## Dependency Injection
+
 The framework has a small dependency injection system that wires Classes with Postfix: Controller, Service, and Repository. For example, you can create a abstract class named 'SomeService':
 
 ```dart
+@injectable
 abstract class SomeService {
   String someMethod();
 }
@@ -46,27 +93,31 @@ abstract class SomeService {
 and then we can create next implementation class:
 
 ```dart
+@injectable
 class SomeServiceImpl implements SomeService {
   String someMethod() => 'someMethod';
 }
 ```
 
-in that way whenever a controller has a variable of Type SomeService and is annotated with @autowired the framework is going to inject SomeServiceImpl into the controller.
+in that way whenever a controller has a variable of Type SomeService and is annotated with `@autowired` the framework is going to inject SomeServiceImpl into the controller.
 
 If you have a third level class that implements or extends SomeService this class is going to be used doubt to the level.
 
-> Since Dart has support for Global Variables and Methods, I think that we don't need to add support for annotations @Component, @Value, or @Bean that are used on Spring MVC.
+> Since Dart has support for Global Variables and Methods, I think that we don't need to add support for annotations `@Value`, or `@Bean` that are used on Spring MVC.
 
-##Create Controllers
-To create a controller you only need to append 'Controller' to the class name, for example:
+## Create Controllers
+
+To create a controller you only need to append `Controller` to the class name, for example:
 
 ```dart
+@injectable
 class PersonsController {
   //Methods
 }
 ```
 
-###Methods and URIs
+### Methods and URIs
+
 By convention a URI is created with the combination of the Controller name and the method name:
 
 ```dart
@@ -79,12 +130,14 @@ class HiController {
 }
 ```
 
-Methods: get, getAll, save, saveAll, delete, and deleteAll are being ignored during the mapping. So that, they are only going to have the controller name
+Methods: `get`, `getAll`, `save`, `saveAll`, `delete`, and `deleteAll` are being ignored during the mapping. So that, they are only going to have the controller name
 
-###Path Variables
+### Path Variables
+
 By convention path variables are going to be the required arguments from the methods, for example:
 
 ```dart
+@injectable
 class HelloController extends HiController {
 
   // mapped to: Hello/getVar/{id}/{var1}  
@@ -95,7 +148,8 @@ class HelloController extends HiController {
 
 If the argument type is HttpRequest, HttpHeaders or HttpSession, this is not going to be mapped as path variable. In contrast, those arguments are going to be passed to the method from the current request.
 
-###Query parameters
+### Query parameters
+
 By convention, query parameters are going to be mapped from the optional arguments, for example:
 
 ```dart
@@ -109,7 +163,8 @@ class PersonsController extends HiController {
 ```
 in the previous sample pageSize and pageNumber are optional, so users could or could not write those values during a new request
     
-###Autowiring Variables
+### Autowiring Variables
+
 To autowire a variable by Class Type and Weight you only need to annotate that variable with @autowired (similar to Spring).
 
 ```dart
@@ -123,11 +178,12 @@ class HelloController extends HiController {
 }
 ```
 
-###Create Rest Controllers
+### Create Rest Controllers
 
 If you want to create a REST-API with controllers you could do the next:
  
 ```dart
+@injectable
 class PersonsController {
 
   // GET persons/1
@@ -236,7 +292,7 @@ and creating your own implementation. Furthermore, you can also create a better 
               meRole == role));
 ```
 
-##TODOs
+## TODOs
 
 * Create Generic Rest Controller which should be extended for other controllers
 * Add Object Relational Mapping (ORM) or Domain Object Model (DOM) support

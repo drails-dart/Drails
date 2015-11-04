@@ -23,8 +23,7 @@ class RequestParam {
   const RequestParam({this.paramName: ""});
 }
 
-/// This annotation indicates the controller path. In other words all the methods are going
-/// to inherit their controller path
+/// This annotation indicates the controller path.
 class Path {
   const Path([this.url]);
 

@@ -102,11 +102,11 @@ main() {
     group('authorization sample ->', () {
       var loginUrl = localhostUrl + '/login', employeesUrl = localhostUrl + '/employees';
       
-      group('no username password', () {
+      group('no username password ->', () {
 
-        test(' login', () {
+        test('login', () {
           post(loginUrl).then(expectAsync((Response response) {
-            expect(response.statusCode, 400);
+            expect(response.statusCode, 401);
           }));
         });
 
@@ -132,7 +132,7 @@ main() {
 
       group('wrong username password ->', () {
         test('login', () {
-          post(loginUrl, body:'{"name": "lulos",  "password": "lulos"}').then(expectAsync((Response response) {
+          post(loginUrl + "?username=lulos&password=lulos").then(expectAsync((Response response) {
             expect(response.statusCode, 401);
           }));
         });
@@ -160,7 +160,7 @@ main() {
       group('good username password ->', () {
         var sessionId;
         test('login', () {
-          post(loginUrl, body:'{"name": "lulo",  "password": "lulo"}').then(expectAsync((Response response) {
+          post(loginUrl + "?username=lulo&password=lulo").then(expectAsync((Response response) {
             expect(response.statusCode, 200);
             sessionId = response.headers['set-cookie'].replaceFirst('DARTSESSID=', '').replaceFirst('; Path=/; HttpOnly', '');
           }));

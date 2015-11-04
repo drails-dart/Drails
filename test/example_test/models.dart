@@ -12,3 +12,11 @@ class User {
   String password;
   List<String> roles;
 }
+
+@serializable
+class Person {
+  int id;
+  String firstName;
+  String lastName;
+  DateTime dob;
+}

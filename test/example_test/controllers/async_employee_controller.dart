@@ -7,7 +7,7 @@ Map<int, Employee> employees = {
     ..salary = 2000
 };
 
-@component
+@injectable
 class AsyncEmployeesController {
   
   Future<Employee> get(int id) => new Future<Employee>.delayed(new Duration(seconds: 5), () => 

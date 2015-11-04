@@ -5,7 +5,6 @@ import 'package:drails_di/drails_di.dart';
 import 'package:logging/logging.dart';
 import 'dart:io';
 import 'dart:async';
-import 'package:dson/dson.dart';
 import 'models.dart';
 
 part 'controllers/persons_controller.dart';
@@ -23,19 +22,22 @@ initLogging() {
   });
 }
 
-@component
-@POST
-login(HttpSession session, @RequestBody User user) {
-  var currentUser;
-  try {
-    currentUser = users.values
-        .singleWhere((u) =>
-            u.name == user.name
-                && u.password == user.password);
-  } catch (e, s) {
-    throw new NoAuthorizedError();
+@injectable
+@Path('')
+class LoginController {
+  @POST
+  login(HttpSession httpSession, {String username, String password}) {
+    var currentUser;
+    try {
+      currentUser = users.values
+          .singleWhere((u) =>
+      u.name == username
+          && u.password == password);
+    } catch (e) {
+      throw new NoAuthorizedError();
+    }
+    httpSession['user'] = currentUser;
   }
-  session['user'] = currentUser;
 }
 
 void main() {
@@ -44,7 +46,7 @@ void main() {
   initServer(['drails_example']);
 }
 
-@component
+@injectable
 class HelloController extends HiController {
   String someString;
   
@@ -63,38 +65,35 @@ class HelloController extends HiController {
   
 }
 
-@component
+@injectable
 class HiController {
   String index() => "hi";
   
   String get2() => 'get';
 }
 
-@component
+@injectable
 abstract class HelloService {
   String sayHello() => 'hello from Hello service abstract class';
 }
 
-@component
+@injectable
 class HelloServiceImpl extends HelloService {
   String sayHello() => super.sayHello();
 }
 
-@component
+@injectable
 class HelloServiceImpl2 extends HelloServiceImpl {
   
 }
 
-@component
+@injectable
 abstract class SomeService {
   String someMethod();
 }
 
 
-@component
+@injectable
 class SomeServiceImpl implements SomeService {
   String someMethod() => 'someMethod';
 }
-
-@component
-abstract class UserComp extends User {}

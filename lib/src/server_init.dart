@@ -28,7 +28,8 @@ void initServer(List<String> includedLibs, {address , int port : 4040}) {
       print(e);
     }
 
-    _initProxyServer(router);
+    // TODO: add support for this when reflectable support top-level functions
+//    _initProxyServer(router);
     
     controllers.forEach((controller) => _mapControllers(controller, router));
   });
@@ -69,26 +70,27 @@ void _initFileServer(Router router) {
     virDir.directoryHandler = dirHandler;
 }
 
-void _initProxyServer(Router router) {
-
-  ApplicationContext.proxyFunctions.forEach((gfmm, lm) {
-    Path _path = new GetValueOfAnnotation<Path>().fromDeclaration(gfmm);
-    String method = _path == null || _path is Get ? "GET" : "POST";
-
-    String url = _path == null || _path.url == null ? gfmm.simpleName : _path.url;
-
-    _serverInitLog.info('method: $method, url: $url');
-    router.serve(new UrlPattern('/$url'), method: method).listen((request) {
-      _process(request, lm, gfmm);
-    });
-  });
-}
+//void _initProxyServer(Router router) {
+//
+//  ApplicationContext.proxyFunctions.forEach((gfmm, lm) {
+//    Path _path = new GetValueOfAnnotation<Path>().fromDeclaration(gfmm);
+//    String method = _path == null || _path is Get ? "GET" : "POST";
+//
+//    String url = _path == null || _path.url == null ? gfmm.simpleName : _path.url;
+//
+//    _serverInitLog.info('method: $method, url: $url');
+//    router.serve(new UrlPattern('/$url'), method: method).listen((request) {
+//      _process(request, lm, gfmm);
+//    });
+//  });
+//}
 
 void _mapControllers(Object controller, Router router) {
-  var controllerIm = component.reflect(controller),
+  var controllerIm = injectable.reflect(controller),
       controllerCm = controllerIm.type,
       controllerName = controllerCm.simpleName.replaceFirst('Controller', '').toLowerCase(),
-      controllerMms = getPublicMethodsFromClass(controllerCm, component);
+      controllerMms = getPublicMethodsFromClass(controllerCm, injectable),
+      controllerPath = new GetValueOfAnnotation<Path>().fromInstance(controllerIm)?.url;
 
   router.serve(new UrlPattern("/$controllerName(/(\\w+))?"), method: 'OPTIONS').listen((request) {
     _writeResponse("", false, request);
@@ -97,7 +99,7 @@ void _mapControllers(Object controller, Router router) {
   controllerMms.forEach((symbol, MethodMirror controllerMm) {
     var controllerMethodName = controllerMm.simpleName;
 
-    var urlPath = '/$controllerName',
+    var urlPath = controllerPath ?? '/$controllerName',
         method = 'GET',
         wordPath = '/(\\w+)',
         pathParamBegin = 1;
@@ -130,7 +132,8 @@ void _mapControllers(Object controller, Router router) {
         controllerMm.parameters.forEach((param) {
           if(!new IsAnnotation<_RequestBody>().onDeclaration(param)
               && param.type.simpleName != 'HttpRequest'
-              && param.type.simpleName != 'HttpSession')
+              && param.type.simpleName != 'HttpSession'
+              && !param.isOptional)
           urlPath += wordPath;
         });
     }
@@ -143,10 +146,10 @@ void _mapControllers(Object controller, Router router) {
   });
 }
 
-void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [int pathParamBegin = 1]) {
+void _process(HttpRequest request, InstanceMirror mirror, MethodMirror methodMirror, [int pathParamBegin = 1]) {
   var pathSegments = request.uri.pathSegments,
       positionalArgs = [], 
-      namedArgs = {},
+      namedArgs = <Symbol, dynamic>{},
       _ref,
       i = 0,
       removeBrackets = false;
@@ -164,16 +167,16 @@ void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [in
           positionalArgs.add(request.session);
         } else if( (parameter.isNamed || new IsAnnotation<RequestParam>().onDeclaration(parameter))
             && (_ref = request.uri.queryParameters[parameter.simpleName]) != null) {
-          namedArgs[parameter.simpleName] = _ref;
+          namedArgs[new Symbol(parameter.simpleName)] = _ref;
         } else if(new IsAnnotation<_RequestBody>().onDeclaration(parameter) && data.isNotEmpty) {
           if(parameter.type.simpleName == SN_LIST) {
             if(!(data as String).startsWith('[')) {
               data = '[$data]';
               removeBrackets = true;
             }
-            positionalArgs.add(deserializeList(data, parameter.type.typeArguments.first.reflectedType));
+            positionalArgs.add(fromJsonList(data, parameter.type.typeArguments.first.reflectedType));
           } else {
-            positionalArgs.add(deserialize(data, parameter.type.reflectedType));
+            positionalArgs.add(fromJson(data, parameter.type.reflectedType));
           }
         } else if(pathVariables.length >= i + 1 ) {
           if (parameter.type.simpleName == SN_INT) {
@@ -183,7 +186,7 @@ void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [in
           } else if (parameter.type.simpleName == SN_DATETIME) {
             positionalArgs.add(DateTime.parse(pathVariables.elementAt(i++)));
           } else {_serverInitLog.fine('parameter.type.reflectedType: ${parameter.type.reflectedType}');
-            positionalArgs.add(deserialize(pathVariables.elementAt(i++), parameter.type.reflectedType));
+            positionalArgs.add(fromJson(pathVariables.elementAt(i++), parameter.type.reflectedType));
           }
         }
       });
@@ -213,7 +216,7 @@ void _process(HttpRequest request, Mirror mirror, MethodMirror methodMirror, [in
 }
 
 void _invokeControllerMethod(
-  Mirror mirror,
+  InstanceMirror mirror,
   MethodMirror methodMirror,
   List positionalArgs,
   Map<Symbol, dynamic> namedArgs,
@@ -249,7 +252,7 @@ void _invokeControllerMethod(
 }
 
 void _writeResponse(result, bool removeBrackets, HttpRequest request) {
-  result = result == null ? "" : serialize(result);
+  result = result == null ? "" : toJson(result);
   if(removeBrackets) {
     result = result.substring(1, result.length - 1);
   }
@@ -264,10 +267,3 @@ void _writeResponse(result, bool removeBrackets, HttpRequest request) {
       ..write(result)
       ..close();
 }
-
-@component
-abstract class _HttpSessionComponent extends HttpSession {}
-@component
-abstract class _HttpHeadersComponent extends HttpHeaders {}
-@component
-abstract class _HttpRequestComponent extends HttpRequest {}
