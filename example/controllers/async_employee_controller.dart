@@ -8,8 +8,8 @@ Map<int, Employee> employees = {
 };
 
 @injectable
-class AsyncEmployeesController {
-  
-  Future<Employee> get(int id) => new Future<Employee>.delayed(new Duration(seconds: 5), () => 
+class AsyncEmployeesController extends _$AsyncEmployeesControllerSerializable {
+
+  Future<Employee> get(int id) => new Future<Employee>.delayed(new Duration(seconds: 5), () =>
       employees[id]);
 }
