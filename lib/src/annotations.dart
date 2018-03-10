@@ -6,10 +6,9 @@ part of drails;
  */
 const RequestBody = const _RequestBody();
 
-class _RequestBody {
+class _RequestBody extends Annotation {
   const _RequestBody();
 }
-
 
 
 const requestParam = const RequestParam();
@@ -18,13 +17,14 @@ const requestParam = const RequestParam();
  * Annotation that indicates that a method parameter should be bound to a web
  * request parameter.
  */
-class RequestParam {
+class RequestParam extends Annotation {
   final String paramName;
+
   const RequestParam({this.paramName: ""});
 }
 
 /// This annotation indicates the controller path.
-class Path {
+class Path extends Annotation {
   const Path([this.url]);
 
   final String url;
@@ -32,7 +32,7 @@ class Path {
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// GET request being the url the name of the method.
-const GET = const Get();
+const Get GET = const Get();
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// GET request being the url the name of the method or the value passed to [url] parameter.
@@ -42,30 +42,30 @@ class Get extends Path {
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// POST request being the url the name of the method.
-const POST = const Post();
+const Post POST = const Post();
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// POST request being the url the name of the method or the value passed to [url] parameter.
-class Post extends Path{
+class Post extends Path {
   const Post([String url]) : super(url);
 }
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// PUT request being the url the name of the method.
-const PUT = const Put();
+const Put PUT = const Put();
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// PUT request being the url the name of the method or the value passed to [url] parameter.
-class Put extends Path{
+class Put extends Path {
   const Put([String url]) : super(url);
 }
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// DELETE request being the url the name of the method.
-const DELETE = const Delete();
+const Delete DELETE = const Delete();
 
 /// This annotation indicates that the controller method or global function should be mapped to a
 /// DELETE request being the url the name of the method or the value passed to [url] parameter.
-class Delete extends Path{
+class Delete extends Path {
   const Delete([String url]) : super(url);
 }

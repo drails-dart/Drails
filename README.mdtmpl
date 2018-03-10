@@ -38,57 +38,11 @@ dev_dependencies:
 
 3\. Inside `main.dart` add next code:
 
-```dart
-library drails_demo.simple_server;
-
-import 'package:drails/drails.dart';
-import 'package:logging/logging.dart';
-import 'package:logging_handlers/server_logging_handlers.dart';
-
-part 'simple_server.g.dart';
-
-main() {
-  _initMirrors();
-
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(new LogPrintHandler());
-
-  initServer();
-}
-
-@GET // This annotation is optional, and can be replaced by `@Get()` or `Get(url = 'say-hello')`
-@component // This annotation can be replaced by @injectable
-String hello(String name) => 'Hello $name!';
-```
+{@example demo/bin/simple_server.dart}
 
 or you can also use a simple controller instead:
 
-```dart
-library drails_demo.controller_server.dart;
-
-import 'package:drails/drails.dart';
-import 'package:logging/logging.dart';
-import 'package:logging_handlers/logging_handlers_shared.dart';
-
-part 'controller_server.g.dart';
-
-main() {
-  _initMirrors();
-
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(new LogPrintHandler());
-
-  initServer();
-}
-
-@injectable
-class HelloController extends _$HelloControllerSerializable {
-  String get(String name) => 'Hello $name!';
-}
-
-```
+{@example demo/bin/controller_server.dart}
 
 4\. Run next command in terminal to generate required files:
 
